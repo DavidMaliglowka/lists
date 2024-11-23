@@ -17,6 +17,7 @@
         :root {
             --primary: #006F57;
             --secondary: #23856D;
+            --tertiary: #005143;
             --accent: #BB010B;
             --accent-light: #CD1624;
             --text: #FAF8F8;
@@ -35,7 +36,7 @@
             height: 300px;
             background-image: url('./images/wallpaper_illustration_2.png');
             background-size: cover;
-            background-position: center;
+            background-position: center top;
             position: relative;
         }
 
@@ -123,7 +124,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--accent);
+            background: var(--tertiary);
             padding: 0.75rem 1.5rem;
             display: flex;
             justify-content: space-between;
@@ -376,7 +377,7 @@
         }
 
         .player-button {
-            background: var(--accent-light);
+            background: var(--secondary);
             color: var(--text);
             border: none;
             padding: 0.5rem 1rem;

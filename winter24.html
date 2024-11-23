@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>David's Christmas List '24</title>
+    <link rel="icon" type="image/svg+xml" href="./images/favicon-32x32.png">
+    <meta property="og:image" content="./images/og-image.png">
+    <meta property="og:image:width" content="1226">
+    <meta property="og:image:height" content="828">
+    <meta property="og:title" content="David's List '24">
+    <meta property="og:description" content="David's Christmas List for 2024">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash/4.17.21/lodash.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #006F57;
+            --secondary: #23856D;
+            --accent: #BB010B;
+            --accent-light: #CD1624;
+            --text: #FAF8F8;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .banner {
+            width: 100%;
+            height: 300px;
+            background-image: url('./images/wallpaper_illustration_2.png');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* Horizontal ribbon */
+        .banner::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: 
+                linear-gradient(90deg, 
+                    #fff 25%, 
+                    transparent 25%,
+                    transparent 50%, 
+                    #fff 50%, 
+                    #fff 75%, 
+                    transparent 75%, 
+                    transparent);
+            background-size: 16px 100%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        /* Vertical ribbon */
+        /* .banner::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            height: calc(100% + 8px);
+            width: 8px;
+            transform: translateX(-50%);
+            background: 
+                linear-gradient(180deg, 
+                    #BB010B 25%, 
+                    transparent 25%,
+                    transparent 50%, 
+                    #BB010B 50%, 
+                    #BB010B 75%, 
+                    transparent 75%, 
+                    transparent);
+            background-size: 100% 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            box-shadow: 2px 0 6px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        } */
+
+        .container {
+            padding: 1.6rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1.6rem;
+            animation: bounce 1s infinite;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+
+
+        #youtube-player {
+            width: 1px;
+            height: 1px;
+            visibility: hidden;
+            position: absolute;
+        }
+
+        .music-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--accent);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+            gap: 1rem;
+        }
+
+        .now-playing-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #now-playing {
+            color: var(--text);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            min-width: 0;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-display {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .track-info {
+                gap: 0.25rem;
+            }
+
+            #now-playing {
+                flex-direction: column;
+            }
+
+            .time-display {
+                font-size: 0.8rem;
+            }
+            
+            .player-button {
+                width: 44px;  /* Slightly smaller on mobile */
+                height: 44px;
+            }
+            
+            .player-button svg {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .marquee {
+            display: inline-block;
+            padding-right: 2rem;
+        }
+
+        .marquee.playing {
+            animation: marquee 15s linear infinite;
+        }
+
+        /* Remove the mask image that was cutting off text */
+        #now-playing {
+            mask-image: none;
+            -webkit-mask-image: none;
+        }
+
+        .cover-art {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .player-button {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, background-color 0.2s;
+            width: 48px;  /* Larger on desktop */
+            height: 48px;
+        }
+
+        .player-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .player-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .player-button svg {
+            width: 32px;  /* Larger on desktop */
+            height: 32px;
+            stroke-width: 3;
+        }
+
+        .player-button.play {
+            background: var(--text);
+            color: var(--accent);
+        }
+
+        .player-button.play:hover {
+            background: var(--text);
+            opacity: 0.9;
+        }
+
+        .select, .input {
+            background: var(--accent);
+            color: var(--text);
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            /* width: 180px; */
+        }
+
+        #priceInput {
+            width: 90px;
+        }
+
+        .select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            background-size: 1em;
+        }
+
+        .input {
+            padding: 0.5rem 1rem 0.5rem 1.8rem;
+        }
+
+        .category {
+            margin-bottom: 3.2rem;
+        }
+
+        .category-title {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.6rem;
+        }
+
+        .card {
+            position: relative;
+            overflow: visible;
+            background: white;
+            color: black;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-image {
+            height: 160px;
+            background: #f0f0f0;
+        }
+
+        .card-content {
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.4rem;
+        }
+
+        .card-details {
+            margin-bottom: auto;
+        }
+
+        .store-text {
+            color: #666;
+            text-align: center;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+        }
+
+        .buy-button {
+            margin-top: 1.6rem;
+            display: block;
+            width: 100%;
+            background: var(--accent);
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.4rem;
+            border-radius: 9999px;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .buy-button:hover {
+            background: var(--accent-light);
+        }
+
+        .music-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--accent);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-button {
+            background: var(--accent-light);
+            color: var(--text);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @media (max-width: 768px) {
+
+            .banner::after {
+                width: 99%
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .snowfall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .snow {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(3px);
+        }
+
+        @keyframes snowfall {
+            0% {
+                transform: translateY(-100%) translateX(-50%);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) translateX(50%);
+                opacity: 0.3;
+            }
+        }
+
+        /* Ensure content stays above snow */
+        .container {
+            position: relative;
+            z-index: 2;
+        }
+
+        .music-player {
+            position: fixed;
+            z-index: 2;
+        }
+
+        .stacked-images {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: -150px;
+            z-index: 2;
+        }
+
+        .stacked-image {
+            width: 100%;
+            height: auto;
+        }
+
+        .stacked-image.top {
+            max-width: 300px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .stacked-image.bottom {
+            max-width: 200px;
+            margin-top: -140px;
+        }
+
+        .input-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .input-container::before {
+            content: "$";
+            position: absolute;
+            left: 0.7rem;
+            top: 47%;
+            transform: translateY(-51%);
+            color: #FFFFFF;
+            z-index: 1;
+        }
+
+        .input {
+            background: var(--accent);
+            color: #FFFFFF;
+            padding: 0.5rem 1rem 0.5rem 1.8rem;
+            border: none;
+            border-radius: 0.25rem;
+            /* width: 180px; */
+        }
+
+        .input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input::-webkit-outer-spin-button,
+        .input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .marquee {
+            animation: marquee 15s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Add responsive adjustments */
+        @media (max-width: 768px) {
+            .music-player {
+                padding: 0.75rem 1rem;
+            }
+            
+            .cover-art {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .player-button {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .player-button svg {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .now-playing-container {
+                max-width: 65%; /* Increased from 50% to show more text */
+            }
+        }
+
+        .flags-container {
+            position: absolute;
+            top: 35%;
+            left: 0;
+            overflow: visible;
+            z-index: 1;
+            }
+
+            /* .flag-wrapper {
+            position: absolute;
+            transform: rotate(-45deg);
+            transform-origin: center center;
+            z-index: 2;
+            } */
+
+            .flag {
+            background: var(--secondary);
+            color: #FFFFFF;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 0 4px 4px 0;
+            transition: all 0.2s ease;
+            }
+
+            /* Different styling for ship flag */
+            .flag.ship {
+            background: var(--accent);
+            
+            }
+
+    </style>
+</head>
+<body>
+    <div class="banner"></div>
+    <div class="container">
+        <div class="stacked-images">
+            <img src="./images/fireplace-grinch.png" alt="Top Image" class="stacked-image top">
+            <img src="./images/fire.gif" alt="Bottom Image" class="stacked-image bottom">
+        </div>
+        <h1>David's List '24</h1>
+                
+        <div class="controls">
+            <select class="select" id="sortSelect">
+                <option value="name">Sort by Name</option>
+                <option value="price">Sort by Price</option>
+            </select>
+
+            <select class="select" id="storeSelect">
+                <option value="All">All Stores</option>
+            </select>
+
+            <div class="input-container">
+                <input type="number" class="input" id="priceInput" placeholder="Max Price">
+            </div>
+        </div>
+
+        <div id="itemsContainer"></div>
+    </div>
+    <div class="music-player">
+        <div class="now-playing-container">
+            <div id="cover-art" class="cover-art">🎵</div>
+            <div class="track-info">
+                <div id="now-playing">Loading...</div>
+                <div class="time-display"></div>
+            </div>
+        </div>
+        <div id="youtube-player"></div>
+        <div class="player-controls">
+            <button onclick="previousTrack()" id="previousButton" class="player-button" disabled>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                    <line x1="5" y1="19" x2="5" y2="5"></line>
+                </svg>
+            </button>
+            <button onclick="togglePlay()" id="playButton" class="player-button play" disabled>
+                <svg id="playIcon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="pauseIcon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display: none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="4" x2="8" y2="20"></line>
+                    <line x1="16" y1="4" x2="16" y2="20"></line>
+                </svg>
+            </button>
+            <button onclick="skipTrack()" id="skipButton" class="player-button" disabled>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                    <line x1="19" y1="5" x2="19" y2="19"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Move YouTube player variables to global scope
+        let player;
+let isPlaying = false;
+
+function onYouTubeIframeAPIReady() {
+    try {
+        player = new YT.Player('youtube-player', {
+            height: '80',
+            width: '400',
+            videoId: '1YBtzAAChU8',
+            playerVars: {
+                controls: 0,
+                showinfo: 0,
+                modestbranding: 1,
+                autoplay: 1,
+                mute: 1,  // Start muted
+                enablejsapi: 1,
+                rel: 0,
+                origin: window.location.origin // Add origin for local development
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange,
+                'onError': onPlayerError
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing YouTube player:', error);
+    }
+}
+
+function onPlayerReady(event) {
+    try {
+        document.getElementById('playButton').disabled = false;
+        document.getElementById('skipButton').disabled = false;
+        document.getElementById('previousButton').disabled = false;
+        
+        // Start playing
+        player.playVideo();
+        updateNowPlaying();
+
+        // Add one-time click listener
+        const unmuteHandler = () => {
+            try {
+                if (player && player.isMuted && player.isMuted()) {
+                    player.unMute();
+                    player.setVolume(100);
+                }
+                document.removeEventListener('click', unmuteHandler);
+            } catch (error) {
+                console.error('Error in unmute handler:', error);
+            }
+        };
+        
+        // Add click listener
+        document.addEventListener('click', unmuteHandler);
+    } catch (error) {
+        console.error('Error in player ready:', error);
+    }
+}
+
+function onPlayerError(event) {
+    console.log("Player error code:", event.data);
+    document.getElementById('now-playing').textContent = 'Error playing video';
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+        isPlaying = true;
+        document.getElementById('playIcon').style.display = 'none';
+        document.getElementById('pauseIcon').style.display = 'block';
+        // Add playing class to start marquee
+        const nowPlaying = document.getElementById('now-playing');
+        if (nowPlaying.classList.contains('marquee')) {
+            nowPlaying.classList.add('playing');
+        }
+    } else if (event.data === YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        document.getElementById('playIcon').style.display = 'block';
+        document.getElementById('pauseIcon').style.display = 'none';
+        // Remove playing class to pause marquee
+        document.getElementById('now-playing').classList.remove('playing');
+    }
+}
+
+function togglePlay() {
+    if (!player) return;
+    
+    if (isPlaying) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+}
+
+function skipTrack() {
+    if (!player) return;
+    
+    try {
+        // Get current time and duration
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        
+        // Skip to next chapter or forward by 5 minutes
+        const chapters = getChapters();
+        if (chapters.length > 0) {
+            // Find next chapter
+            const nextChapter = chapters.find(chapter => chapter.time > currentTime);
+            if (nextChapter) {
+                player.seekTo(nextChapter.time);
+            } else {
+                // If no next chapter, go back to start
+                player.seekTo(0);
+            }
+        } else {
+            // No chapters, skip forward 5 minutes
+            const newTime = currentTime + 300; // 300 seconds = 5 minutes
+            if (newTime < duration) {
+                player.seekTo(newTime);
+            } else {
+                // If near end, restart
+                player.seekTo(0);
+            }
+        }
+    } catch (error) {
+        console.error('Error skipping:', error);
+    }
+}
+
+function previousTrack() {
+    if (!player) return;
+    
+    try {
+        // Get current time
+        const currentTime = player.getCurrentTime();
+        
+        // Get chapters
+        const chapters = getChapters();
+        
+        // Find current chapter
+        const currentChapterIndex = chapters
+            .slice()
+            .reverse()
+            .findIndex(chapter => currentTime >= chapter.time);
+        
+        if (currentChapterIndex !== -1) {
+            const reversedIndex = chapters.length - 1 - currentChapterIndex;
+            const currentChapter = chapters[reversedIndex];
+            
+            // If we're more than 3 seconds into the current chapter,
+            // go to the start of the current chapter
+            if (currentTime - currentChapter.time > 3) {
+                player.seekTo(currentChapter.time);
+            } else {
+                // Go to previous chapter if it exists
+                const previousChapter = chapters[reversedIndex - 1];
+                if (previousChapter) {
+                    player.seekTo(previousChapter.time);
+                } else {
+                    // If no previous chapter, go to the beginning
+                    player.seekTo(0);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error going to previous track:', error);
+    }
+}
+
+function getChapters() {
+    // This is a placeholder for getting chapter data
+    // YouTube doesn't provide direct API access to chapters
+    // You would need to manually define chapters if needed
+    return [
+        { time: 0, title: "No Spirit - That Time Of The Year" },
+        { time: 144, title: "Dimension 32 x Quantum Break - Something's Magical" },
+        { time: 300, title: "xander. x Lucid Keys - Snowballs" },
+        { time: 469, title: "Thaehan - Waiting By The Fireplace" },
+        { time: 622, title: "xander. x Lucid Keys - Snow On The Trees" },
+        { time: 742, title: "Softy x Two Scents - Snowdrops" },
+        { time: 922, title: "eleven x Fugee - December To Remember" },
+        { time: 1072, title: "Tibeauthetraveler x maeLstro x Lucie Cravero - Gentle Snowflakes" },
+        { time: 1219, title: "Thaehan - Letter To Santa" },
+        { time: 1348, title: "Lucid Keys - Mistletoe Wonder" },
+        { time: 1503, title: "No Spirit - Wishlist" },
+        { time: 1632, title: "HoKø - Red Hat" },
+        { time: 1779, title: "Lawrence Walther x vhskid. - Gingerbread Dreams" },
+        { time: 1923, title: "Jam'addict x Monocloud - Christmas Lullaby" },
+        { time: 2056, title: "Deja Blue - Cozy" },
+        { time: 2186, title: "flâneur x marsquake x Dani Catalá - Warmth Of The Heart" },
+        { time: 2279, title: "Odd Panda x marsquake x No Spirit - Contemplative Times" },
+        { time: 2406, title: "Nothingtosay x Klemsis - December Wishes" },
+        { time: 2541, title: "flâneur x marsquake x Dani Catalá - Firewood And Hot Chocolate" },
+        { time: 2657, title: "Lucid Keys - Holiday Cheer" },
+        { time: 2793, title: "HoKø x Lucie Cravero - Santa's Shop" },
+        { time: 2915, title: "Strong.AL& x Simber x Lock - Warmth Of Christmas Haven" },
+        { time: 3043, title: "Softy x So.Lo - Snowy Hills" },
+        { time: 3178, title: "Kainbeats - Am Kaminknistern" },
+        { time: 3344, title: "Nothingtosay x Klemsis - Snowy Tree" },
+        { time: 3507, title: "Softy x Jazzyhan - Winter Time, Now" },
+        { time: 3663, title: "comodo - Mistletoe" },
+        { time: 3811, title: "Quist x Lofty - Seeing You In Every Snowflake" }
+    ];
+}
+
+function updateNowPlaying() {
+    try {
+        if (!player || !player.getCurrentTime) {
+            console.warn('Player not ready');
+            return;
+        }
+        const currentTime = Math.floor(player.getCurrentTime());
+        
+        // Format time as mm:ss
+        const formatTime = (seconds) => {
+            seconds = Math.floor(seconds);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        };
+        
+        // Get chapters and find current chapter
+        const chapters = getChapters();
+        const currentChapterIndex = chapters
+            .slice()
+            .reverse()
+            .findIndex(chapter => currentTime >= chapter.time);
+        
+        if (currentChapterIndex !== -1) {
+            const reversedIndex = chapters.length - 1 - currentChapterIndex;
+            const currentChapter = chapters[reversedIndex];
+            const nextChapter = chapters[reversedIndex + 1];
+            
+            const chapterStartTime = currentChapter.time;
+            let chapterEndTime;
+            
+            if (nextChapter) {
+                chapterEndTime = nextChapter.time;
+            } else {
+                const previousChapter = chapters[reversedIndex - 1];
+                const typicalDuration = previousChapter ? 
+                    currentChapter.time - previousChapter.time : 
+                    Math.floor((player.getDuration() - currentChapter.time));
+                chapterEndTime = currentChapter.time + typicalDuration;
+            }
+            
+            const chapterDuration = chapterEndTime - chapterStartTime;
+            const relativeTime = currentTime - chapterStartTime;
+            const timeDisplay = `(${formatTime(relativeTime)}/${formatTime(chapterDuration)})`;
+
+            const nowPlayingElement = document.getElementById('now-playing');
+            const timeDisplayElement = document.querySelector('.time-display');
+            const coverArtElement = document.getElementById('cover-art');
+            
+            // Update emoji and title if song changed
+            if (currentChapter.title !== nowPlayingElement.getAttribute('data-current-title')) {
+                // Update emoji
+                coverArtElement.textContent = getRandomChristmasEmoji();
+                
+                // Remove existing animation classes and force reflow
+                nowPlayingElement.classList.remove('marquee', 'playing');
+                void nowPlayingElement.offsetWidth; // Force reflow
+                
+                // Update title
+                nowPlayingElement.textContent = currentChapter.title;
+                nowPlayingElement.setAttribute('data-current-title', currentChapter.title);
+                
+                // Check if content is overflowing
+                if (nowPlayingElement.scrollWidth > nowPlayingElement.clientWidth) {
+                    // Calculate the distance the text needs to move
+                    const moveDistance = (nowPlayingElement.scrollWidth / nowPlayingElement.clientWidth) * 100;
+                    
+                    // Create and apply the keyframe animation
+                    const keyframes = `
+                        @keyframes marquee {
+                            0% { transform: translateX(10); }
+                            100% { transform: translateX(-${moveDistance}%); }
+                        }
+                    `;
+                    
+                    // Remove existing style element if it exists
+                    const existingStyle = document.getElementById('marquee-style');
+                    if (existingStyle) {
+                        existingStyle.remove();
+                    }
+                    
+                    // Add new style element
+                    const style = document.createElement('style');
+                    style.id = 'marquee-style';
+                    style.textContent = keyframes;
+                    document.head.appendChild(style);
+                    
+                    // Add marquee class and playing class if currently playing
+                    nowPlayingElement.classList.add('marquee');
+                    if (isPlaying) {
+                        nowPlayingElement.classList.add('playing');
+                    }
+                }
+            }
+            
+            // Always update time
+            timeDisplayElement.textContent = timeDisplay;
+        }
+    } catch (error) {
+        console.error('Error updating now playing:', error);
+        const nowPlaying = document.getElementById('now-playing');
+        if (nowPlaying) {
+            nowPlaying.textContent = 'Loading...';
+        }
+    }
+}
+
+// Update time display every second
+setInterval(() => {
+    if (isPlaying) {
+        updateNowPlaying();
+    }
+}, 1000);
+
+
+
+        // Fallback groupBy implementation in case Lodash fails to load
+        function groupBy(array, key) {
+            return array.reduce((result, currentValue) => {
+                (result[currentValue[key]] = result[currentValue[key]] || []).push(currentValue);
+                return result;
+            }, {});
+        }
+
+        function getRandomChristmasEmoji() {
+            const emojis = [  '🎅', '🎄','⛄', '🛷', '🎁','❄️', '🎁', '🦌', '🔔', '☃️', '✨', '🕯️', '🍪', '🧤', '🧣', '🌨️']; 
+            return emojis[Math.floor(Math.random() * emojis.length)];
+        }
+
+        const christmasListData = {
+             "items": [
+                {
+                "name": "How to Make a Few Billion Dollars",
+                "price": 21.00,
+                "link": "https://www.amazon.com/dp/B0CHTQP25T/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Educational investment to learn about business scaling and wealth generation strategies",
+                "category": "Books"
+                },
+                {
+                "name": "Propaganda",
+                "price": 8.00,
+                "link": "https://www.amazon.com/dp/1915923522/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Understanding media influence and persuasion techniques in modern communication",
+                "category": "Books"
+                },
+                {
+                "name": "46mm Lake Green Sport Loop",
+                "price": 49.00,
+                "link": "https://www.apple.com/shop/product/MXL83AM/A/46mm-lake-green-sport-loop",
+                "store": "Apple",
+                "productImage": "",
+                "rationale": "Softer band material to improve comfort for sleep tracking and all-day wear of Apple Watch",
+                "category": "Watch"
+                },
+                {
+                "name": "Electric Salt and Pepper Grinder Set",
+                "price": 36.00,
+                "link": "https://www.amazon.com/dp/B01A39TKLW/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Upgrade kitchen workflow with one-handed seasoning operation while cooking",
+                "category": "House"
+                },
+                {
+                "name": "SwitchBot Hub 2",
+                "price": 59.00,
+                "link": "https://www.amazon.com/dp/B0BM8VS13P",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Enable Alexa control for TV and automated curtain operation, expanding smart home capabilities",
+                "category": "House"
+                },
+                {
+                "name": "Iron Gray Metallic w/ Spool",
+                "price": 25.00,
+                "link": "https://us.store.bambulab.com/collections/bambu-lab-3d-printer-filament/products/pla-metal",
+                "store": "Bambu Lab",
+                "productImage": "",
+                "rationale": "Metallic PLA filament for creating professional-looking prints with metal-like finish",
+                "category": "3D Printing"
+                },
+                {
+                "name": "White Marble - PLA Marble",
+                "price": 25.00,
+                "link": "https://us.store.bambulab.com/collections/bambu-lab-3d-printer-filament/products/pla-marble",
+                "store": "Bambu Lab",
+                "productImage": "",
+                "rationale": "Marble-effect filament for creating decorative items with stone-like appearance",
+                "category": "3D Printing"
+                },
+                {
+                "name": ".4mm Hardened Steel - Bambu Hotend - A1 Series",
+                "price": 12.00,
+                "link": "https://us.store.bambulab.com/products/bambu-hotend-a1-series",
+                "store": "Bambu Lab",
+                "productImage": "",
+                "rationale": "Hardened steel hotend to enable printing with abrasive filaments and expand material options",
+                "category": "3D Printing"
+                },
+                {
+                "name": "365Pcs Threaded Inserts, M2 M2.5 M3 M4 M5 M6 Female Thread",
+                "price": 9.00,
+                "link": "https://www.amazon.com/Zuorery-Threaded-Assortment-Printing-Components/dp/B0D1CGC18H/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Essential hardware for creating strong connections between 3D printed parts and mechanical assemblies",
+                "category": "3D Printing"
+                },
+                {
+                "name": "Bondic Pro UV Resin Kit",
+                "price": 29.00,
+                "link": "https://www.amazon.com/Bondic-Activated-Waterproof-Resistant-Microfiber/dp/B00UAH19FS/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "UV-cured adhesive for precise repairs and joining of 3D printed parts",
+                "category": "3D Printing"
+                },
+                {
+                "name": "Philips Norelco Beard Trimmer and Hair Clipper",
+                "price": 29.00,
+                "link": "https://www.amazon.com/Philips-Norelco-Beard-Trimmer-Clipper/dp/B0CLWDH6JC/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "All-in-one solution for maintaining consistent facial hair and haircut styling at home",
+                "category": "Self Care"
+                },
+                {
+                "name": "Hot Lather Machine for Shaving",
+                "price": 34.00,
+                "link": "https://www.amazon.com/Machine-Shaving-Professional-Capacity-Temperature/dp/B0CNVQQND5/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Upgrade shaving experience with barbershop-style heated lather for closer, more comfortable shaves",
+                "category": "Self Care"
+                },
+                {
+                "name": "Wilder Games Hot Ones Truth or Dab The Game",
+                "price": 22.00,
+                "link": "https://www.amazon.com/dp/B08HPPRV73/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Social party game based on popular Hot Ones show for entertaining guests with spicy challenges",
+                "category": "Games, Sports, Survival"
+                },
+                {
+                "name": "Pickleball rackets and bag",
+                "price": 35.00,
+                "link": "https://www.amazon.com/dp/B0C99SJJLH/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Get started with the increasingly popular sport of pickleball for exercise and social activity",
+                "category": "Games, Sports, Survival"
+                },
+                {
+                "name": "Go Time Gear Life Bivy Emergency Survival Sleeping Bag",
+                "price": 20.00,
+                "link": "https://www.amazon.com/dp/B07M6ZM2KV/",
+                "store": "Amazon",
+                "productImage": "",
+                "rationale": "Emergency preparedness gear for outdoor activities and vehicle emergency kit",
+                "category": "Games, Sports, Survival"
+                }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the store select options
+            const stores = [...new Set(christmasListData.items.map(item => item.store))];
+            const storeSelect = document.getElementById('storeSelect');
+            stores.forEach(store => {
+                const option = document.createElement('option');
+                option.value = store;
+                option.textContent = store;
+                storeSelect.appendChild(option);
+            });
+
+            function renderItems() {
+                const sortBy = document.getElementById('sortSelect').value;
+                const filterStore = document.getElementById('storeSelect').value;
+                const filterPrice = document.getElementById('priceInput').value;
+
+                let items = [...christmasListData.items];
+
+                // Apply filters
+                if (filterStore !== 'All') {
+                    items = items.filter(item => item.store === filterStore);
+                }
+                if (filterPrice) {
+                    items = items.filter(item => item.price <= parseFloat(filterPrice));
+                }
+
+                // Sort items
+                items.sort((a, b) => {
+                    if (sortBy === 'price') {
+                        return a.price - b.price;
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                // Use Lodash's groupBy if available, otherwise use fallback
+                const groupByFn = window._ ? _.groupBy : groupBy;
+                const groupedItems = groupByFn(items, 'category');
+                
+                // Render to DOM
+                const container = document.getElementById('itemsContainer');
+                container.innerHTML = '';
+
+                Object.entries(groupedItems).forEach(([category, categoryItems]) => {
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'category';
+                    
+                    categorySection.innerHTML = `
+                        <h2 class="category-title">${category}</h2>
+                        ${category === '3D Printing Filament' ? 
+                            '<p style="text-align: center; margin-bottom: 1.5rem; color: #FAF8F8;">Feel free to get any of the following colors. If fillament with spool is available, please get that. If not, refill works. P.S. I can always use multiple of the same color too especially black and white. </p><hr/><p style="text-align: center; margin-bottom: 1.5rem; color: #FAF8F8;"> During the BF sale, rolls are $15/$18 (w/ Spool) if you order 4+ and $13/$16 (w/ Spool) if you get 8+ </p>' 
+                            : ''}
+                        ${category === 'Clothes' ? 
+                            '<p style="text-align: center; margin-bottom: 1.5rem; color: #FAF8F8;">Use code **ACCELERATE** for 20% off  </p>' 
+                            : ''}
+                        <div class="grid">
+                            ${categoryItems.map(item => `
+                                <div class="card">
+                                    ${item.flags ? `
+                                        <div class="flags-container">
+                                            ${item.flags.includes('sale') ? `
+                                                <div class="flag sale">🏷️ SALE</div>
+                                            ` : ''}
+                                            ${item.flags.includes('ship') ? `
+                                                <div class="flag ship"> 📦 SHIP TO ATX</div>
+                                            ` : ''}
+                                            ${item.flags.includes('coupon') ? `
+                                                <div class="flag coupon"> 🎟️ COUPON</div>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                    <div class="card-image" ${item.productImage ? `style="background-image: url('${item.productImage}'); background-size: cover; background-position: center;"` : ''}></div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">${item.name}</h3>
+                                        <details class="card-details">
+                                            <summary>Why this item?</summary>
+                                            <p>${item.rationale}</p>
+                                        </details>
+                                        <a href="${item.link}" class="buy-button" target="_blank">
+                                            Buy ${getRandomChristmasEmoji()} - $${item.price.toFixed(2)}
+                                        </a>
+                                        <p class="store-text">Available at ${item.store}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    container.appendChild(categorySection);
+                });
+            }
+
+            // Event listeners
+            document.getElementById('sortSelect').addEventListener('change', renderItems);
+            document.getElementById('storeSelect').addEventListener('change', renderItems);
+            document.getElementById('priceInput').addEventListener('input', renderItems);
+
+            document.addEventListener('keydown', function(event) {
+                if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
+                    event.preventDefault();
+                    togglePlay();
+                }
+            });
+
+            // Music player functionality
+            // let isPlaying = false;
+            // const playButton = document.getElementById('playButton');
+            // playButton.addEventListener('click', () => {
+            //     isPlaying = !isPlaying;
+            //     playButton.textContent = isPlaying ? 'Pause' : 'Play';
+            // });
+
+
+            // Initial render
+            renderItems();
+
+            // Create snow container
+            const snowfall = document.createElement('div');
+            snowfall.className = 'snowfall';
+            document.body.prepend(snowfall);
+
+            // Create snow particles
+            function createSnow() {
+                const snow = document.createElement('div');
+                snow.className = 'snow';
+                
+                // Random starting position
+                const startPos = Math.random() * 100;
+                snow.style.left = startPos + '%';
+                
+                // Random size
+                const size = Math.random() * 5 + 3;
+                snow.style.width = size + 'px';
+                snow.style.height = size + 'px';
+                
+                // Random animation duration
+                const duration = Math.random() * 3 + 2;
+                snow.style.animation = `snowfall ${duration}s linear infinite`;
+                
+                // Random delay
+                snow.style.animationDelay = Math.random() * 5 + 's';
+                
+                // Add to container
+                snowfall.appendChild(snow);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    snow.remove();
+                }, duration * 1000);
+            }
+
+            // Create snow at intervals
+            setInterval(createSnow, 200);
+            
+            // Create initial batch of snow
+            for(let i = 0; i < 50; i++) {
+                setTimeout(createSnow, Math.random() * 2000);
+            }
+        });
+    </script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>

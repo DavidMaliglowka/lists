@@ -1,0 +1,27 @@
+# macOS cruft
+.DS_Store
+
+# Cursor state
+.cursor/
+
+# Firebase CLI & emulator output
+.firebase/
+firebase-debug.log
+firestore-debug.log
+storage-debug.log
+firebase-export/
+firestore_export/
+storage_export/
+
+# Secret config & OAuth credentials
+.env
+.env.*
+.firebaserc.local
+firebase-service-account.json
+serviceAccountKey.json
+token.json
+credentials.json
+*.p12
+*.pem
+*.key
+

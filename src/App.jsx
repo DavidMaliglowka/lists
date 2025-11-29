@@ -37,7 +37,7 @@ const ICONS = {
   notes: { icon: <FileText className="text-white" fill="white" />, bg: "bg-gradient-to-b from-yellow-400 to-orange-400" },
   calculator: { icon: <Calculator className="text-white" />, bg: "bg-gray-700" },
   settings: { icon: <Settings className="text-white" />, bg: "bg-gray-500" },
-  preview: { icon: <ImageIcon className="text-white" />, bg: "bg-blue-400" },
+  preview: { icon: <ImageIcon className="text-white" />, bg: "bg-blue-400", hiddenFromDock: true },
   quicktime: { icon: <Film className="text-white" />, bg: "bg-gradient-to-br from-gray-600 to-gray-800", hiddenFromDock: true },
 };
 
@@ -964,7 +964,28 @@ const PreviewApp = ({ file }) => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#2a2a2a] text-white"><div className="flex-1 flex items-center justify-center overflow-hidden bg-[#1e1e1e]">{file.type === 'img' ? <img src={file.src} className="max-w-full max-h-full object-contain shadow-2xl" alt={file.name} /> : <div className="p-8 bg-white text-black h-[80%] w-[80%] shadow-xl whitespace-pre-wrap font-mono text-sm overflow-auto">{file.content || "Binary content not displayed."}</div>}</div></div>
+    <div className="flex flex-col h-full bg-[#2a2a2a] text-white">
+        <div className="flex-1 flex items-center justify-center overflow-hidden bg-[#1e1e1e]">
+            {file.type === 'img' ? (
+                <img src={file.src} className="max-w-full max-h-full object-contain shadow-2xl" alt={file.name} />
+            ) : (
+                <div className="p-8 bg-white text-black h-[80%] w-[80%] shadow-xl overflow-auto">
+                    {file.content ? (
+                        <pre className="whitespace-pre-wrap font-mono text-sm">{file.content}</pre>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center space-y-4">
+                             <Gift size={48} className="text-red-500" />
+                             <div className="text-center">
+                                <p className="font-bold text-lg text-red-600">Christmas Magic!</p>
+                                <p className="text-gray-600 mt-2">This gift cannot be opened yet.</p>
+                                <p className="text-xs text-gray-400 mt-4">(Binary format not supported)</p>
+                             </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    </div>
   );
 };
 

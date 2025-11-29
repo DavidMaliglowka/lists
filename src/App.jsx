@@ -1299,6 +1299,67 @@ const App = () => {
   const [loadError, setLoadError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Initialize/Fetch System Files
+  useEffect(() => {
+      const initSystem = async () => {
+          try {
+              const sysRef = doc(db, 'files', 'defaults');
+              const sysSnap = await getDoc(sysRef);
+              
+              if (!sysSnap.exists()) {
+                  // Seed initial defaults if missing
+                  await setDoc(sysRef, { fileSystem: INITIAL_FILE_SYSTEM });
+              }
+          } catch (e) {
+              console.error("System init error:", e);
+          }
+      };
+      initSystem();
+  }, []);
+
+  // Helper to merge system files into user files
+  const mergeSystemFiles = useCallback((userFs, systemFs) => {
+      if (!userFs || !systemFs) return userFs || systemFs;
+      const merged = JSON.parse(JSON.stringify(userFs)); // Deep copy
+
+      // 1. Remove deprecated f1 (Christmas List text)
+      if (merged['/Desktop']) {
+          merged['/Desktop'] = merged['/Desktop'].filter(f => f.id !== 'f1');
+      }
+
+      // 2. Process System Files
+      Object.entries(systemFs).forEach(([path, files]) => {
+          if (!merged[path]) merged[path] = [];
+          
+          files.forEach(sysFile => {
+              const existingIdx = merged[path].findIndex(f => f.id === sysFile.id);
+              
+              if (existingIdx === -1) {
+                  // New system file - Add it
+                  // Ensure we don't duplicate if it was moved to another folder?
+                  // For simplicity, check if ID exists ANYWHERE in user FS
+                  const idExists = Object.values(merged).flat().some(f => f.id === sysFile.id);
+                  if (!idExists) {
+                      merged[path].push(sysFile);
+                  }
+              } else {
+                  // Existing system file - Merge updates
+                  // We want to update 'src' and 'type' for things like YouTube updates
+                  // But preserve user position (x,y) and name (if renamed)
+                  const existing = merged[path][existingIdx];
+                  merged[path][existingIdx] = {
+                      ...existing,
+                      type: sysFile.type, // Ensure type update (mp4 -> youtube)
+                      src: sysFile.src !== undefined ? sysFile.src : existing.src, // Update src if provided
+                      content: sysFile.content !== undefined ? sysFile.content : existing.content,
+                      // Keep existing x, y, name
+                  };
+              }
+          });
+      });
+      return merged;
+  }, []);
+
   // Fetch Lists
   useEffect(() => {
       const fetchLists = async () => {
@@ -1340,7 +1401,15 @@ const App = () => {
         const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data.fileSystem) setFileSystem(data.fileSystem);
+            
+            if (data.fileSystem) {
+                // Merge with latest system defaults
+                const merged = mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM);
+                setFileSystem(merged);
+            } else {
+                setFileSystem(INITIAL_FILE_SYSTEM);
+            }
+
             if (data.username) setUsername(data.username);
             if (data.family) setFamily(data.family);
             else setFamily('Unknown'); // Explicitly default if missing
@@ -1357,7 +1426,8 @@ const App = () => {
             setDoc(userDocRef, {
               fileSystem: INITIAL_FILE_SYSTEM,
               settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
-              family: 'Unknown'
+              family: 'Unknown',
+              notes: {}
             });
           }
           setIsLoadingData(false);

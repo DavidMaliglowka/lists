@@ -662,7 +662,8 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
         // Admin Views: Direct access to Master Lists
         setNotes([
             { id: 'Dorfman', title: 'Dorfman List', content: lists.Dorfman || '', date: 'Master List' },
-            { id: 'Maliglowka', title: 'Maliglowka List', content: lists.Maliglowka || '', date: 'Master List' }
+            { id: 'Maliglowka', title: 'Maliglowka List', content: lists.Maliglowka || '', date: 'Master List' },
+            { id: 'Unknown', title: 'Unknown List', content: lists.Unknown || '', date: 'Master List' }
         ]);
         if (!activeNoteId) setActiveNoteId('Dorfman');
     } else {
@@ -696,7 +697,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
 
     // Propagate
     if (family === 'Admin') {
-        if (noteId === 'Dorfman' || noteId === 'Maliglowka') {
+        if (noteId === 'Dorfman' || noteId === 'Maliglowka' || noteId === 'Unknown') {
             onUpdateMasterList(noteId, content);
         }
     } else {
@@ -750,7 +751,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
 
   const deleteNote = () => {
       // Prevent deleting Master Lists
-      if (activeNoteId === 'Dorfman' || activeNoteId === 'Maliglowka' || activeNoteId === 'christmas2025') {
+      if (activeNoteId === 'Dorfman' || activeNoteId === 'Maliglowka' || activeNoteId === 'Unknown' || activeNoteId === 'christmas2025') {
           alert("Cannot delete this list.");
           return;
       }
@@ -1365,6 +1366,20 @@ const App = () => {
     return () => { clearInterval(t); window.removeEventListener('keydown', handleKey); };
   }, []);
 
+  // Auto-launch Notes on Login
+  useEffect(() => {
+      if (isLoggedIn && !isLoadingData) {
+          // Calculate center
+          const isMobile = window.innerWidth < 640;
+          const width = isMobile ? 320 : 600;
+          const height = isMobile ? 500 : 450;
+          const x = Math.max(0, (window.innerWidth - width) / 2);
+          const y = Math.max(0, (window.innerHeight - height) / 2);
+          
+          launchApp('notes', { position: { x, y } });
+      }
+  }, [isLoggedIn, isLoadingData]);
+
   // --- Desktop Drag Logic ---
   const handleIconDrag = (e, fileId) => {
     const file = fileSystem['/Desktop'].find(f => f.id === fileId);
@@ -1561,7 +1576,19 @@ const App = () => {
   const launchApp = (appId, props = {}) => {
     const existing = windows.find(w => w.appId === appId && !w.isMultiInstance && !props.forceNew);
     if (existing) {
-      if (existing.isMinimized) setWindows(prev => prev.map(w => w.id === existing.id ? { ...w, isMinimized: false, zIndex: zIndex + 1 } : w));
+      const newWindows = windows.map(w => {
+          if (w.id === existing.id) {
+              return { 
+                  ...w, 
+                  isMinimized: false, 
+                  zIndex: zIndex + 1,
+                  // Update position if provided
+                  ...(props.position ? { position: props.position } : {})
+              };
+          }
+          return w;
+      });
+      setWindows(newWindows);
       setActiveWindowId(existing.id); setZIndex(z => z + 1); return;
     }
     const id = Date.now();

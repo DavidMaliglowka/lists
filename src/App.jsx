@@ -6,7 +6,7 @@ import {
   LogOut, Power, RefreshCw, Moon, File, List, Bold, Italic, 
   ListOrdered, Link, Trash, Type, Eye, EyeOff, Heading1, Plus,
   FileSpreadsheet, Box, FileCode, Film, Video, Music, User, ArrowRight, Lock,
-  Snowflake, Gift, Mail, Quote
+  Snowflake, Gift, Mail, Quote, ArrowDownWideNarrow, Smartphone, Info
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
@@ -57,7 +57,6 @@ const INITIAL_FILE_SYSTEM = {
   '/Movies': [],
   '/Pictures': [
     { id: 'f6', name: 'Family_Xmas.jpg', type: 'img', size: '3.1 MB', date: 'Dec 25, 2023', src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80' },
-    { id: 'f2', name: 'Decorations.jpg', type: 'img', size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
   ]
 };
 
@@ -683,10 +682,28 @@ const SafariApp = () => {
   );
 };
 
-const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNote }) => {
+const MobileWarning = ({ onQuickAccess }) => (
+    <div className="fixed inset-0 z-[20000] bg-black text-white flex flex-col items-center justify-center p-8 text-center space-y-8">
+        <AppleLogo size={64} />
+        <h1 className="text-2xl font-bold">Desktop Experience Required</h1>
+        <p className="text-gray-400 max-w-md">
+            Santa's OS is designed for a larger screen. Please visit on a desktop or laptop for the full experience.
+        </p>
+        <button 
+            onClick={onQuickAccess}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-full font-bold flex items-center space-x-2 transition-transform active:scale-95"
+        >
+            <List size={20} />
+            <span>Quick Access List</span>
+        </button>
+    </div>
+);
+
+const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNote, mobile }) => {
   const [notes, setNotes] = useState([]);
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [isPreview, setIsPreview] = useState(true); 
+  const [isSorted, setIsSorted] = useState(false);
   const textareaRef = useRef(null);
 
   // Helper to merge user's checked state into master list
@@ -826,6 +843,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
       const output = [];
       let listBuffer = [];
       let listType = null;
+      let checkboxBuffer = [];
 
       const flushList = () => {
           if (listBuffer.length > 0) {
@@ -836,6 +854,51 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
               }
               listBuffer = [];
               listType = null;
+          }
+      };
+
+      const flushCheckboxes = () => {
+          if (checkboxBuffer.length > 0) {
+              let items = [...checkboxBuffer];
+              if (isSorted) {
+                  items.sort((a, b) => {
+                      const getPrice = (s) => {
+                          const m = s.line.match(/\$(\d+(?:,\d{3})*)/);
+                          return m ? parseInt(m[1].replace(/,/g, ''), 10) : 0;
+                      };
+                      return getPrice(b) - getPrice(a);
+                  });
+              }
+              items.forEach(({ line, index, subs }) => {
+                  const isChecked = line.trim().startsWith('- [x] ');
+                  const content = line.trim().substring(6);
+                  output.push(
+                      <div key={index} className="flex items-start space-x-2 mb-1 ml-1 group relative">
+                          <input 
+                            type="checkbox" 
+                            checked={isChecked} 
+                            onChange={() => onCheckboxClick(index)}
+                            className="mt-1.5 w-4 h-4 accent-red-500 cursor-pointer shrink-0" 
+                          />
+                          <span className={`dark:text-white leading-relaxed ${isChecked ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
+                            {parseInline(content, index)}
+                            {subs && subs.length > 0 && (
+                                <span className="relative group/info inline-block ml-2 align-middle">
+                                    <Info size={14} className="text-gray-400 hover:text-blue-500 cursor-help" />
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-64 bg-white dark:bg-[#333] p-3 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-50 hidden group-hover/info:block text-sm text-gray-700 dark:text-gray-200 text-left font-normal normal-case no-underline">
+                                        <div className="space-y-2">
+                                            {subs.map((sub, si) => (
+                                                <div key={si} className="leading-snug">{parseInline(sub, `${index}-sub-${si}`)}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </span>
+                            )}
+                          </span>
+                      </div>
+                  );
+              });
+              checkboxBuffer = [];
           }
       };
 
@@ -866,6 +929,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
           // Handle Blockquotes
           if (line.trim().startsWith('> ')) {
               flushList();
+              flushCheckboxes();
               output.push(
                   <blockquote key={i} className="border-l-4 border-gray-300 dark:border-gray-500 pl-4 italic text-gray-600 dark:text-gray-400 my-2">
                       {parseInline(line.trim().substring(2), i)}
@@ -874,26 +938,29 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
               return;
           }
 
+          // Handle Empty Lines contextually (Lookahead for sub-bullets)
+          if (line.trim() === '') {
+              const nextLine = lines[i+1];
+              if (checkboxBuffer.length > 0 && nextLine && (nextLine.startsWith('  ') || nextLine.startsWith('\t')) && (nextLine.trim().startsWith('- ') || nextLine.trim().startsWith('* '))) {
+                  return;
+              }
+          }
+
           // Handle Checkboxes specially
           if (line.trim().startsWith('- [ ] ') || line.trim().startsWith('- [x] ')) {
               if (listType !== null) flushList(); 
-              const isChecked = line.trim().startsWith('- [x] ');
-              const content = line.trim().substring(6);
-              output.push(
-                  <div key={i} className="flex items-start space-x-2 mb-1 ml-1 group">
-                      <input 
-                        type="checkbox" 
-                        checked={isChecked} 
-                        onChange={() => onCheckboxClick(i)}
-                        className="mt-1.5 w-4 h-4 accent-red-500 cursor-pointer" 
-                      />
-                      <span className={`dark:text-white leading-relaxed ${isChecked ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
-                        {parseInline(content, i)}
-                      </span>
-                  </div>
-              );
+              checkboxBuffer.push({ line, index: i, subs: [] });
               return;
           }
+          
+          // Handle Sub-bullets attached to previous checkbox
+          // Checks for indentation (2 spaces or tab) and starts with "- " or "* "
+          if (checkboxBuffer.length > 0 && (line.startsWith('  ') || line.startsWith('\t')) && (line.trim().startsWith('- ') || line.trim().startsWith('* '))) {
+              checkboxBuffer[checkboxBuffer.length - 1].subs.push(line.trim().substring(2));
+              return;
+          }
+          
+          if (checkboxBuffer.length > 0) flushCheckboxes();
 
           if (line.trim().startsWith('- ')) {
               if (listType !== 'ul') flushList();
@@ -915,6 +982,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
           else output.push(<p key={i} className="mb-1 leading-relaxed text-gray-800 dark:text-white">{parseInline(line, i)}</p>);
       });
       flushList();
+      flushCheckboxes();
       return output;
   };
 
@@ -925,6 +993,7 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
 
   return (
     <div className="flex h-full bg-white dark:bg-[#1e1e1e]">
+      {!mobile && (
       <div className="w-48 bg-gray-50 dark:bg-[#282828] border-r border-gray-200 dark:border-black/50 flex flex-col">
         <div className="h-10 flex items-center justify-between px-3 border-b border-gray-200 dark:border-black/50">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">iCloud</span>
@@ -939,9 +1008,11 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
           ))}
         </div>
       </div>
+      )}
       <div className="flex-1 flex flex-col bg-white dark:bg-[#1e1e1e]">
-         {!isReadOnly && (
-             <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a] overflow-x-auto scrollbar-none min-w-0">
+         <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a] overflow-x-auto scrollbar-none min-w-0 justify-between">
+         {!isReadOnly && !mobile ? (
+             <div className="flex items-center space-x-1">
                 <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Bold"><Bold size={16} /></button>
                 <button onClick={() => insertText('_', '_')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Italic"><Italic size={16} /></button>
                 <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1 flex-shrink-0" />
@@ -958,9 +1029,18 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
                     {isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
              </div>
+         ) : (
+             <div className="flex items-center w-full justify-between">
+                 {mobile && <span className="text-sm font-bold text-gray-500 ml-2">My List</span>}
+                 <div className="flex-1" />
+                 <button onClick={() => setIsSorted(!isSorted)} className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 flex-shrink-0 ${isSorted ? 'text-red-500 bg-red-50' : 'text-gray-600 dark:text-gray-300'}`} title="Sort by Price">
+                    <ArrowDownWideNarrow size={16} />
+                 </button>
+             </div>
          )}
+         </div>
          <div className="flex-1 overflow-auto relative">
-            {(isPreview || isReadOnly) ? (
+            {(isPreview || isReadOnly || mobile) ? (
                 <div className="p-8 prose dark:prose-invert max-w-none">{renderMarkdown(activeNote.content)}</div>
             ) : (
                 <textarea 
@@ -1337,6 +1417,15 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showMobileList, setShowMobileList] = useState(false);
+
+  useEffect(() => {
+      const handleResize = () => setIsMobile(window.innerWidth < 768);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [darkMode, setDarkMode] = useState(true);
   const [snowEffect, setSnowEffect] = useState(true);
   const [wallpaper, setWallpaper] = useState(WALLPAPERS['Cozy Fireplace']);
@@ -1381,9 +1470,12 @@ const App = () => {
       if (!userFs || !systemFs) return userFs || systemFs;
       const merged = JSON.parse(JSON.stringify(userFs)); // Deep copy
 
-      // 1. Remove deprecated f1 (Christmas List text)
+      // 1. Remove deprecated f1 (Christmas List text) and f2 (Decorations.jpg)
       if (merged['/Desktop']) {
           merged['/Desktop'] = merged['/Desktop'].filter(f => f.id !== 'f1');
+      }
+      if (merged['/Pictures']) {
+          merged['/Pictures'] = merged['/Pictures'].filter(f => f.id !== 'f2');
       }
 
       // 2. Process System Files
@@ -1920,6 +2012,25 @@ const App = () => {
         <div className="text-white/50 text-sm font-light">Loading your preferences...</div>
     </div>
   );
+
+  if (isMobile && !showMobileList) {
+      return <MobileWarning onQuickAccess={() => setShowMobileList(true)} />;
+  }
+
+  if (isMobile && showMobileList) {
+      return (
+          <div className={`${darkMode ? 'dark' : ''} h-full bg-white dark:bg-[#1e1e1e]`}>
+              <NotesApp 
+                  family={family} 
+                  lists={lists} 
+                  userNotes={userNotes} 
+                  onUpdateMasterList={handleUpdateMasterList} 
+                  onUpdateUserNote={handleUpdateUserNote} 
+                  mobile={true} 
+              />
+          </div>
+      );
+  }
 
   return (
     <div 

@@ -21,80 +21,6 @@ const WALLPAPERS = {
   'Santa Workshop': `${import.meta.env.BASE_URL}images/wallpaper_illustration_4.png`,
 };
 
-const DORFMAN_LIST = `## Dorfman
-
-Books
-
-- [ ] The Founders - [link](https://www.amazon.com/Founders-Paypal-Entrepreneurs-Shaped-Silicon/dp/150119724X/ref=tmm_pap_swatch_0?_encoding=UTF8&coliid=I20A4W74OFDS1Z&colid=JM0PFUTSZT64) $16
-
-Clothing
-
-- [ ] Mission Belt - Vader 40 Black XL  - [link](https://missionbelt.com/collections/40mm-belts/products/vader-40?variant=40782792201) $45**
-
-- [ ] 40 mm Blue XL - [link](https://missionbelt.com/collections/leathers/products/40mm-blue-leather?variant=1280093556) $25** 
-
-**use code BFCM2025 for 30% off
-
-Tech
-
-- [ ] **Logitech MX Master 3S Mouse w/o reciever [link](https://www.amazon.com/Logitech-Master-Bluetooth-Wireless-Receiver/dp/B0FB21526X/ref=sr_1_4?crid=1T6F6ML0DLMT1&dib=eyJ2IjoiMSJ9.8jkSFxt7X6kIB3tGRcpgW6xklfjRcWQ2CRkiSBA5pw6r-sT7YsiTTeBq1nJx6WlnpRMLF2q-PAb-vHWNJ2jo79Oggjaq8zPCj1x3U4ycdO9mSRCaB3x2BmQUptwLr38F7pnZ8cABBkcxIM90zIUiZBlarfFnxruEc27ZUxjy8UcKbfyeqtaWRjwptXvvbLNiRrH2DF58VN7zjh0osXyF-lZqQ_wRcIlvvmceRkeEBig.ZuxV0QSPtGz7K-UqgKhSwBS3KRvOa2SKbtrMwTZVLio&dib_tag=se&keywords=logitech%2Bmx%2Bmaster&qid=1764324498&sprefix=logit%2Caps%2C171&sr=8-4&th=1) $79**
-
-- [ ] **MOFT Phone Tripod Wallet - [link](https://www.amazon.com/gp/product/B0FP2Q582D/ref=ox_sc_act_title_1?smid=ATA25QZQ7J17R&th=1) $39**
-
-Tools
-
-- [ ] Hot glue gun - [link](https://www.amazon.com/gp/product/B0DMSH894V/ref=ox_sc_saved_image_8?smid=ATVPDKIKX0DER&th=1) $8
-
-- [ ] Heat gun - [link](https://www.amazon.com/SEEKONE-Handheld-Reflector-Embossing-Stripping/dp/B08VFY8THD/ref=sr_1_6?crid=DS0EF3HB7500&dib=eyJ2IjoiMSJ9.5gm2Lb5w7VJN8eZBOb3sMWiUD-J7k61cDGJ97KLGueiYEpaHc33TCWLpmRyqoaOC39ZsLKwQ_5tbCphqk-fWYrrtl9WqisVc7Qx_hjZvlI69Xwy5FhSQ5KQ_n_owRDm8HSbDhOnQ5sdXSsuG-fCHH8BCCTTBEfkhvoN82Q5hR7RY9tvesNjRulggvkf5rSryn4ROfusk8f2PHRg81kK-ixZ6MlKqzBmnOUgGGDuPeRK7N0kxii9z8k9WsPKpivSvDsIzaJUk27urBr0WnDRaZ-didXheg_WMWU3YmUX2hYE.ib4ezK9CXCaKmjBnRBs0D6q9E2F0iqQHGC2fJSK8YX0&dib_tag=se&keywords=Heat+Gun&qid=1764306480&s=hi&sprefix=heat+gun%2Ctools%2C181&sr=1-6#averageCustomerReviewsAnchor) $15
-
-- [ ] Laser Level - [link](https://www.amazon.com/Leveling-Motovera-Brightness-Adjustment-Waterproof/dp/B0B56BB51R?th=1&linkCode=sl1&tag=3smlaserlevels-20&linkId=4489f1f5501c04ed668a1cc4d836a2fa&language=en_US&ref_=as_li_ss_tl) $26
-
-- [ ] **Laser tape measure - [link](https://www.amazon.com/BOSCH-GLM100-23-Measure-Backlit-Display/dp/B0C76CPGC7/ref=sr_1_3_sspa?crid=9O7D0GWAET0F&dib=eyJ2IjoiMSJ9.mj-W5iK6ogN481JmG524QasK1z8pPgTemgdAmxqx6Wws_Rn-y8bZ8eRwRqyPrgZK9mJeNpkZQtxey3DRCD-EGUrRsS8Yy-3FpAP92Ll8_OIaNDDPtFGFyLIUxvx_LKoatNL7i1A2-cRkfYXpf8dE-ImNhvNJXQJZ-mbqEIcuYF0MTfnn1SimlDP0R3mZx4ZJAfWwOQ-lOFCMN9u1UH1nAlrinneAGMZlrhGHeRfBKiCrFuBmYS1kNKFWaNf-o42s5A_896USsR-j8T6f-uc38g1qw8ZE4TK-uIyczogh_SU.nDt0JU-q-ouWcMgwqh0U9MasjCADXNopl3MGoxees00&dib_tag=se&keywords=laser%2Btape%2Bmeasure&qid=1764230667&sprefix=laser%2Btap%2Caps%2C161&sr=8-3-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1)$39**
-
-- [ ] Mini cricut heat press - [link](https://www.amazon.com/Cricut-EasyPress-Mini-Heat-Press/dp/B0FRNK3TWT/ref=sr_1_5?dib=eyJ2IjoiMSJ9.ecSNgfcOAf9F0Wcq_d_tKkqFR68TBSb51CE6AUrQqLYKZrDeo8kM-u8xN5dnEc4H604dq9f6GYYAU1H3Kxm3KTHfwQOu1UHPWZhlSs21ZR3scnNSxMUBtRJDaPM5gnPignh-a5GWGEqt6uJJLPqLEu-57kFzvVnTSR4hvXJdGtgMLgEZP5Wob31mbJkuQYOW3hQmvYGTSRAotkQ6edhi9UNR9B6_mwITwqEBx4NnwKRYNDQtqmmAro526zWCM-e5dqVlTDmgxXWwHATgVrSx3U7Udg-wCAHztLwFt0TWwv8.n0AtkwhaGPyCzHl3l2dIi2uUc5Ze6BoukwySfvCO6RI&dib_tag=se&keywords=mini%2Bcricut&qid=1764307372&sr=8-5&th=1) $39`;
-
-const MALIGLOWKA_LIST = `## Maliglowka
-
-Tech
-
-- [ ] Wyze security camera v4 black 2 pack - [link](https://www.amazon.com/WYZE-Security-Activated-Spotlight-Enhanced/dp/B0CT91ZZY8/ref=sr_1_6?crid=1LPADLG9T1WRL&dib=eyJ2IjoiMSJ9.C19-L2tIZJMLFquApX7LL_rVAUlcrMydkO8GwAhy7mqt4hNh33ipDSUD14-eO89gxAP4kZXPAtrICjGbwueVv6fwKzE7djlnFfVppMtpQyuw60MjZLAABZ4z3TkHofA-bRXEhQcTlsa5rGXbRfVu_GQ41ghzJh7dJ0MOS85OIEvVsRIqu8KEcgCHle6DBakS6Q2kTUp7qn94qNezAvdvV64ecvSNuQsWJBd9DbgA8dc.nv9N0h7s3EMw57faSJ0tTZrTNyWuhzINMsmv_Y5oNzI&dib_tag=se&keywords=wyze%2Bsecurity%2Bcamera&qid=1764229668&sprefix=wyze%2Bse%2Caps%2C166&sr=8-6&th=1#averageCustomerReviewsAnchor) $40
-
-- [ ] Le Robot Arm - [link](https://www.amazon.com/dp/B0FH8CPXP7?th=1) $288 or here (w/ camera) $289 [link](https://partabot.com/products/so-arm101)
-
-- [ ] Cable Matters 20Gbps USB C Switch - [link](https://www.amazon.com/dp/B0DLJT49Z3?tag=mrforums-20#averageCustomerReviewsAnchor) $64
-
-- [ ] USB Cable Tester Board [link](https://www.amazon.com/dp/B0CF95VL2Y?th=1&linkCode=sl1&tag=that0d-20&linkId=66ae5dd677bc1463d6a650f02839adef&language=en_US&ref_=as_li_ss_tl) $13
-
-Tools
-
-- [ ] Ryobi 300 piece Drill Set - [link](https://www.homedepot.com/pep/RYOBI-300-Piece-Drill-and-Drive-Kit-A983002/306526534) $64
-
-- [ ] 711L EDC Ratchet Wrench Flex HEX [link](https://www.amazon.com/dp/B09T9NPKD8?linkCode=sl1&tag=that0d-20&linkId=6139ad05e54ef6c8f96382cfcd3647c4&language=en_US&ref_=as_li_ss_tl&th=1) $44
-
-- [ ] Mallet - [link](https://www.amazon.com/LOZAGU-Fiberglass-Flooring-Woodworking-Camping/dp/B0C5DXJG68/ref=sr_1_2_sspa?crid=2WN5U769KG04L&dib=eyJ2IjoiMSJ9.gMIQn6EVkBt0RdLMwaylyRY1PRFhZCUIVr9ViTata0P-6V2zTASpm1vBKphA5DoPuECwEARJaPWCEQkZNPzVgO8RVE09wkbmlpK3XX3kfZo5U3F7KwUYHAgAM6m-oKk_2ID89Aue3xHIp9TV_WbEttwYo02-xmLNnrpkEr5R7dMTEEPNLEVId9xgQ9yvXzsGv9jLhXKUK1xJUQs9MIJ8vQTI8_uJG_Lkz6RUBK-ce6jFzZMIxw9uajwuiVFVhkqb4Y3vWVvlnVWtBFzLMNXMaYmkbnTJsWD9r2YasM_TWyQ.fXxb1e3BJc9g9e9-hIDHYRiHhb9GDb7vByK4s3s4gBI&dib_tag=se&keywords=rubber%2Bmallet&qid=1764231204&sprefix=mallet%2Caps%2C443&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1) $6
-
-- [ ] Rechargeable AAA Batteries - [link](https://www.amazon.com/dp/B08B3MJLGH/?tag=thewire06-20&linkCode=xm2&ascsubtag=F0401KAGN4E1SAWZHVKCQKRNCKX7K&smid=A20TL6304W6TZ7&th=1) $7
-
-- [ ] Rechargeable AA Batteries - [link](https://www.amazon.com/dp/B00HSHLC82/?tag=thewire06-20&linkCode=xm2&ascsubtag=F0401HZT455BGK5401Z4300RYGXV1&th=1) $9
-
-- [ ] Battery Charger - [link](https://www.amazon.com/dp/B01G4T230U/?tag=thewire06-20&linkCode=xm2&ascsubtag=F0401HZT1BS0D3XQ1XR2Q0HSEKK3M&th=1) $26
-
-- [ ] DIY Soldering Project Game Kit [link](https://www.amazon.com/dp/B07HB3HPPJ?th=1&linkCode=sl1&tag=that0d-20&linkId=5149536e4ee4378ca04cdf19843ed93c&language=en_US&ref_=as_li_ss_tl) $16
-
-Desk
-
-- [ ] Desktop White  Glass Dry Erase Board with Wood Org - [link](https://www.amazon.com/dp/B09BF5H931?th=1&linkCode=sl1&tag=that0d-20&linkId=a67ddf00605ab2bdd417e8f655aaf362&language=en_US&ref_=as_li_ss_tl) $22
-
-- [ ] YEOUX Multi-Purpose Desktop Stand, Birch & Clear [link](https://www.amazon.com/dp/B09BF8RXPL?ref=emc_p_m_5_i_atc&th=1) $23
-
-Toys
-
-- [ ] Alternative Beyblade stadium - [link](https://www.amazon.com/BEYBLADE-Tournament-Beystadium-Authentic-Spinning-Top/dp/B0DX4CX1MD/ref=sr_1_2_sspa?crid=3NRHIU4EE9Z9I&dib=eyJ2IjoiMSJ9.6P6r-D-LMG5rB3G0GuuepNIz6BQI59eCYyBlhqrvhvLa8O7Wj6K1_kWXlnDEHyU4TchbfshLxbBdIoml1ddSJq8U-hS5yy03qyQPiBWD6jMYtjuPDtBP0ywhzDaqxxUoD_wh0H_Rq87VWT9OG1UqrXGoZF0JYsOyi6E5sf-b9bk7tS0M4LbPyuSDpiHcqT_Qh0YY6A20Wek1hWCZ1eIo9ydISLFW_tbS1c0P9usDXs9zGfAT3yFfQZuay8gJDl697-EtwL_xQWMgd9XxdIhStISgwx2o15Le6WZ4YE4NCGc.zQHt7BUxSxXanfIhy96AB1abCQaxPwjsHzLgcGJtBn8&dib_tag=se&keywords=beyblade+x+stadium&qid=1764358604&s=toys-and-games&sprefix=beyblade%2Ctoys-and-games%2C199&sr=1-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1) $48`;
-
-const UNKNOWN_LIST = `## Welcome
-
-Please text David that you signed up and need to view this list!`;
-
 const THEME_COLOR = "red"; // Changing global accent to Red for Christmas
 
 const AppleLogo = ({ size = 20, className = "", fill = "currentColor" }) => (
@@ -698,58 +624,87 @@ const SafariApp = () => {
   );
 };
 
-const NotesApp = ({ family, lists }) => {
-  const [notes, setNotes] = useState([
-    { id: 1, title: 'My Christmas List', content: '# 🎄 My Christmas List 2024\n\n### Big Wishes\n- [ ] New MacBook Pro M4\n- [ ] Noise Cancelling Headphones\n- [ ] Espresso Machine\n\n### Stocking Stuffers\n- [ ] Fuzzy Socks\n- [ ] Dark Chocolate\n- [ ] Gift Cards', date: '10:42 AM' }, 
-    { id: 2, title: 'Cookie Recipe', content: '# Sugar Cookies\n1. 3 cups Flour\n2. 1 cup Butter\n3. 1 cup Sugar\n\n![Cookies](https://images.unsplash.com/photo-1499636138143-bd630f5cf388?w=200&q=80)', date: 'Yesterday' }
-  ]);
-  const [activeNoteId, setActiveNoteId] = useState(1);
+const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNote }) => {
+  const [notes, setNotes] = useState([]);
+  const [activeNoteId, setActiveNoteId] = useState(null);
   const [isPreview, setIsPreview] = useState(true); 
   const textareaRef = useRef(null);
 
   // Helper to merge user's checked state into master list
-  const mergeListState = (masterContent, userContent) => {
+  const mergeListState = useCallback((masterContent, userContent) => {
     if (!userContent) return masterContent;
     const masterLines = masterContent.split('\n');
     const userLines = userContent.split('\n');
     const checkedItems = new Set();
     userLines.forEach(line => {
         if (line.includes('[x] ')) {
-            checkedItems.add(line.replace('[x] ', '').trim());
+            checkedItems.add(line.replace('[x] ', '').trim()); // Store the text without the box
         }
     });
     return masterLines.map(line => {
+        // If master has a box
         if (line.includes('[ ] ')) {
             const cleanLine = line.replace('[ ] ', '').trim();
+            // If user checked this item
             if (checkedItems.has(cleanLine)) {
                 return line.replace('[ ] ', '[x] ');
             }
         }
+        // If master has it checked (admin checked it?), we respect master? 
+        // Admin usually doesn't check boxes on master list, but if they did, it would come through as '[x] ' in masterLines.
+        // This logic preserves Master structure.
         return line;
     }).join('\n');
-  };
+  }, []);
 
   useEffect(() => {
-    let masterContent = lists.Unknown || UNKNOWN_LIST;
-    if (family === 'Dorfman') masterContent = lists.Dorfman || DORFMAN_LIST;
-    else if (family === 'Maliglowka') masterContent = lists.Maliglowka || MALIGLOWKA_LIST;
-    else if (family === 'Admin') masterContent = (lists.Dorfman || DORFMAN_LIST) + '\n\n' + (lists.Maliglowka || MALIGLOWKA_LIST);
+    if (family === 'Admin') {
+        // Admin Views: Direct access to Master Lists
+        setNotes([
+            { id: 'Dorfman', title: 'Dorfman List', content: lists.Dorfman || '', date: 'Master List' },
+            { id: 'Maliglowka', title: 'Maliglowka List', content: lists.Maliglowka || '', date: 'Master List' }
+        ]);
+        if (!activeNoteId) setActiveNoteId('Dorfman');
+    } else {
+        // User View: Merged List
+        let masterContent = lists.Unknown || '';
+        if (family === 'Dorfman') masterContent = lists.Dorfman || '';
+        else if (family === 'Maliglowka') masterContent = lists.Maliglowka || '';
 
-    setNotes(prev => {
-        const existing = prev.find(n => n.id === 1);
-        const newContent = existing ? mergeListState(masterContent, existing.content) : masterContent;
-        return prev.map(n => n.id === 1 ? { ...n, content: newContent, title: 'My Christmas List 2025' } : n);
-    });
-  }, [family, lists]);
+        // Load user's previous state for this note
+        const userContent = userNotes['christmas2025'];
+        const mergedContent = mergeListState(masterContent, userContent);
+
+        setNotes([
+            { id: 'christmas2025', title: 'My Christmas List 2025', content: mergedContent, date: 'Today' }
+        ]);
+        if (!activeNoteId) setActiveNoteId('christmas2025');
+    }
+  }, [family, lists, userNotes, mergeListState]);
+
+  // If activeNoteId becomes invalid (e.g. switching families), reset it?
+  // The effect above handles initialization if empty.
 
   const activeNote = notes.find(n => n.id === activeNoteId) || { title: 'No Notes', content: '' };
 
   const updateNote = (content) => {
-    setNotes(prevNotes => prevNotes.map(n => n.id === activeNoteId ? { ...n, content, title: content.split('\n')[0].replace(/^[#\s]+/, '') || 'New Note' } : n));
+    const noteId = activeNoteId;
+    if (!noteId) return;
+
+    // Optimistic Update
+    setNotes(prevNotes => prevNotes.map(n => n.id === noteId ? { ...n, content, title: content.split('\n')[0].replace(/^[#\s]+/, '') || 'New Note' } : n));
+
+    // Propagate
+    if (family === 'Admin') {
+        if (noteId === 'Dorfman' || noteId === 'Maliglowka') {
+            onUpdateMasterList(noteId, content);
+        }
+    } else {
+        onUpdateUserNote(noteId, content);
+    }
   };
 
   const onCheckboxClick = (lineIndex) => {
-    // Toggle checkbox state
     const lines = activeNote.content.split('\n');
     if (lineIndex >= lines.length) return;
     
@@ -763,6 +718,7 @@ const NotesApp = ({ family, lists }) => {
   };
 
   const createNewNote = () => {
+      // Admin shouldn't really create new notes in this constrained version, but keep logic for now
       const newId = Date.now();
       const newNote = { id: newId, title: 'New Note', content: '', date: 'Just now' };
       setNotes(prev => [newNote, ...prev]); 
@@ -793,6 +749,11 @@ const NotesApp = ({ family, lists }) => {
   };
 
   const deleteNote = () => {
+      // Prevent deleting Master Lists
+      if (activeNoteId === 'Dorfman' || activeNoteId === 'Maliglowka' || activeNoteId === 'christmas2025') {
+          alert("Cannot delete this list.");
+          return;
+      }
       const remaining = notes.filter(n => n.id !== activeNoteId);
       setNotes(remaining);
       if (remaining.length > 0) setActiveNoteId(remaining[0].id);
@@ -844,7 +805,7 @@ const NotesApp = ({ family, lists }) => {
       lines.forEach((line, i) => {
           // Handle Checkboxes specially
           if (line.trim().startsWith('- [ ] ') || line.trim().startsWith('- [x] ')) {
-              if (listType !== null) flushList(); // Checkboxes break standard lists in this simple parser or we treat them as UL
+              if (listType !== null) flushList(); 
               const isChecked = line.trim().startsWith('- [x] ');
               const content = line.trim().substring(6);
               output.push(
@@ -887,15 +848,16 @@ const NotesApp = ({ family, lists }) => {
   };
 
   // Determine if Read-Only Mode
-  const isChristmasList = activeNote.title === 'My Christmas List 2025';
-  const isReadOnly = isChristmasList && family !== 'Admin';
+  // Admin: Can edit Master Lists.
+  // User: Can ONLY click checkboxes (which is handled by input logic, text editing hidden).
+  const isReadOnly = family !== 'Admin'; 
 
   return (
     <div className="flex h-full bg-white dark:bg-[#1e1e1e]">
       <div className="w-48 bg-gray-50 dark:bg-[#282828] border-r border-gray-200 dark:border-black/50 flex flex-col">
         <div className="h-10 flex items-center justify-between px-3 border-b border-gray-200 dark:border-black/50">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">iCloud</span>
-            <button onClick={createNewNote} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-500"><Plus size={14} /></button>
+            {!isReadOnly && <button onClick={createNewNote} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-500"><Plus size={14} /></button>}
         </div>
         <div className="flex-1 overflow-y-auto">
           {notes.map(note => (
@@ -1272,6 +1234,7 @@ const App = () => {
   const [username, setUsername] = useState('');
   const [family, setFamily] = useState('Unknown');
   const [lists, setLists] = useState({ Dorfman: '', Maliglowka: '', Unknown: '' });
+  const [userNotes, setUserNotes] = useState({}); // Persist user-specific note data (e.g. checkboxes)
   const [date, setDate] = useState(new Date());
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
@@ -1286,7 +1249,7 @@ const App = () => {
   const [loadError, setLoadError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch Lists & Seed if empty
+  // Fetch Lists
   useEffect(() => {
       const fetchLists = async () => {
           if (!isLoggedIn) return;
@@ -1297,25 +1260,14 @@ const App = () => {
               const unknownRef = doc(db, 'lists', 'Unknown');
               
               const dorfmanSnap = await getDoc(dorfmanRef);
-              
-              if (!dorfmanSnap.exists()) {
-                  // Seed data
-                  const batch = writeBatch(db);
-                  batch.set(dorfmanRef, { content: DORFMAN_LIST });
-                  batch.set(maliglowkaRef, { content: MALIGLOWKA_LIST });
-                  batch.set(unknownRef, { content: UNKNOWN_LIST });
-                  await batch.commit();
-                  setLists({ Dorfman: DORFMAN_LIST, Maliglowka: MALIGLOWKA_LIST, Unknown: UNKNOWN_LIST });
-              } else {
-                  // Fetch all
-                  const maliglowkaSnap = await getDoc(maliglowkaRef);
-                  const unknownSnap = await getDoc(unknownRef);
-                  setLists({
-                      Dorfman: dorfmanSnap.data()?.content || '',
-                      Maliglowka: maliglowkaSnap.data()?.content || '',
-                      Unknown: unknownSnap.data()?.content || ''
-                  });
-              }
+              const maliglowkaSnap = await getDoc(maliglowkaRef);
+              const unknownSnap = await getDoc(unknownRef);
+
+              setLists({
+                  Dorfman: dorfmanSnap.exists() ? dorfmanSnap.data()?.content : '',
+                  Maliglowka: maliglowkaSnap.exists() ? maliglowkaSnap.data()?.content : '',
+                  Unknown: unknownSnap.exists() ? unknownSnap.data()?.content : ''
+              });
           } catch (e) {
               console.error("Error fetching lists:", e);
           }
@@ -1342,6 +1294,8 @@ const App = () => {
             if (data.username) setUsername(data.username);
             if (data.family) setFamily(data.family);
             else setFamily('Unknown'); // Explicitly default if missing
+            
+            if (data.notes) setUserNotes(data.notes); // Load user notes
 
             if (data.settings) {
               if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
@@ -1387,7 +1341,8 @@ const App = () => {
         fileSystem,
         settings: { wallpaper, darkMode, snowEffect },
         username,
-        family
+        family,
+        notes: userNotes
       }, { merge: true })
       .then(() => setIsSaving(false))
       .catch((err) => {
@@ -1395,13 +1350,13 @@ const App = () => {
           setIsSaving(false);
       });
     }, 1000); // Reduced debounce to 1 second
-  }, [user, fileSystem, wallpaper, darkMode, snowEffect, username, family]);
+  }, [user, fileSystem, wallpaper, darkMode, snowEffect, username, family, userNotes]);
 
   useEffect(() => {
     if (isLoggedIn && !booting && !isLoadingData && !loadError) {
         saveState();
     }
-  }, [fileSystem, wallpaper, darkMode, snowEffect, username, family, isLoggedIn, booting, isLoadingData, loadError, saveState]);
+  }, [fileSystem, wallpaper, darkMode, snowEffect, username, family, userNotes, isLoggedIn, booting, isLoadingData, loadError, saveState]);
 
   useEffect(() => {
     const t = setInterval(() => setDate(new Date()), 1000);
@@ -1663,11 +1618,24 @@ const App = () => {
       }
   };
 
+  const handleUpdateMasterList = async (listName, content) => {
+      setLists(prev => ({ ...prev, [listName]: content }));
+      try {
+          await setDoc(doc(db, 'lists', listName), { content }, { merge: true });
+      } catch (e) {
+          console.error("Error updating master list:", e);
+      }
+  };
+
+  const handleUpdateUserNote = (noteId, content) => {
+      setUserNotes(prev => ({ ...prev, [noteId]: content }));
+  };
+
   const renderContent = (win) => {
     switch(win.appId) {
       case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name })} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
       case 'safari': return <SafariApp />;
-      case 'notes': return <NotesApp family={family} lists={lists} />;
+      case 'notes': return <NotesApp family={family} lists={lists} userNotes={userNotes} onUpdateMasterList={handleUpdateMasterList} onUpdateUserNote={handleUpdateUserNote} />;
       case 'terminal': return <TerminalApp fileSystem={fileSystem} setFileSystem={setFileSystem} />;
       case 'preview': return <PreviewApp file={win.file} />;
       case 'textedit': return <TextEditApp file={win.file} onSave={updateFileContent} />;

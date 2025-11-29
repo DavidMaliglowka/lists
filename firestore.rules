@@ -4,21 +4,24 @@ service cloud.firestore {
     
     // Usernames mapping: username -> { email, uid }
     match /usernames/{username} {
-      // Public read needed for login (resolving username -> email)
       allow read: if true;
       
-      // Authenticated users can claim a username (create) or release it (delete)
-      // Must link to their own UID
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null
+                    // Ensure the user is claiming the username for themselves
+                    && request.resource.data.uid == request.auth.uid
+                    // Verify the email matches their auth token (prevents spoofing)
+                    && request.resource.data.email == request.auth.token.email;
+                    
+      allow delete: if request.auth != null 
+                    && resource.data.uid == request.auth.uid;
     }
 
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null 
                    && request.auth.uid == userId
-                   && request.resource.data.size() < 200 * 1024
-                   // Added 'username' to allowed fields
+                   && request.resource.data.size() < 500 * 1024
+                   // STRICT SCHEMA: Only allow these specific fields
                    && request.resource.data.keys().hasOnly(['fileSystem', 'settings', 'username']);
     }
   }

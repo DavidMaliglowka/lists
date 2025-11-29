@@ -6,11 +6,11 @@ import {
   LogOut, Power, RefreshCw, Moon, File, List, Bold, Italic, 
   ListOrdered, Link, Trash, Type, Eye, EyeOff, Heading1, Plus,
   FileSpreadsheet, Box, FileCode, Film, Video, Music, User, ArrowRight, Lock,
-  Snowflake, Gift, Mail
+  Snowflake, Gift, Mail, Quote
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, setDoc, onSnapshot, getDoc, writeBatch, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, getDoc, writeBatch, deleteDoc, collection, getDocs } from "firebase/firestore";
 
 /**
  * --- ASSETS & THEME ---
@@ -37,14 +37,15 @@ const ICONS = {
   notes: { icon: <FileText className="text-white" fill="white" />, bg: "bg-gradient-to-b from-yellow-400 to-orange-400" },
   calculator: { icon: <Calculator className="text-white" />, bg: "bg-gray-700" },
   settings: { icon: <Settings className="text-white" />, bg: "bg-gray-500" },
-  preview: { icon: <ImageIcon className="text-white" />, bg: "bg-blue-400" },
+  preview: { icon: <ImageIcon className="text-white" />, bg: "bg-blue-400", hiddenFromDock: true },
   quicktime: { icon: <Film className="text-white" />, bg: "bg-gradient-to-br from-gray-600 to-gray-800", hiddenFromDock: true },
 };
 
 const INITIAL_FILE_SYSTEM = {
   '/Desktop': [
-    { id: 'f1', name: 'My Christmas List.txt', type: 'txt', x: 20, y: 20, size: '4 KB', date: 'Today, 9:41 AM', content: '# 🎄 My Christmas List 2024\n\n### Big Wishes\n- [ ] New MacBook Pro M4\n- [ ] Noise Cancelling Headphones\n- [ ] Espresso Machine\n\n### Stocking Stuffers\n- [ ] Fuzzy Socks\n- [ ] Dark Chocolate\n- [ ] Gift Cards' },
-    { id: 'f2', name: 'Decorations.jpg', type: 'img', x: 20, y: 140, size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
+    { id: 'link1', name: "David's List", type: 'note-link', x: 20, y: 20, date: 'Today' },
+    { id: 'f7', name: 'Fireplace 4K', type: 'youtube', x: 20, y: 140, size: '0 B', date: 'Dec 20, 2024', src: 'https://www.youtube.com/embed/L_LUpnjgPso?autoplay=1' },
+    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', x: 20, y: 260, size: '4.2 MB', date: 'Today, 10:00 AM', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }, 
   ],
   '/Documents': [
     { id: 'f3', name: 'Holiday Recipes.pdf', type: 'pdf', size: '450 KB', date: 'Dec 12, 2024', src: 'https://pdfobject.com/pdf/sample.pdf' },
@@ -52,13 +53,11 @@ const INITIAL_FILE_SYSTEM = {
   ],
   '/Downloads': [
     { id: 'f5', name: 'Elf_Installer.dmg', type: 'dmg', size: '145 MB', date: 'Just now' },
-    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
   ],
-  '/Movies': [
-    { id: 'f7', name: 'Fireplace 4K.mp4', type: 'mp4', size: '1.2 GB', date: 'Dec 20, 2024', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }
-  ],
+  '/Movies': [],
   '/Pictures': [
     { id: 'f6', name: 'Family_Xmas.jpg', type: 'img', size: '3.1 MB', date: 'Dec 25, 2023', src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80' },
+    { id: 'f2', name: 'Decorations.jpg', type: 'img', size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
   ]
 };
 
@@ -104,7 +103,7 @@ const Snowfall = () => {
           100% { transform: translateY(110vh) translateX(20px); }
         }
       `}</style>
-    </div>
+      </div>
   );
 };
 
@@ -113,6 +112,18 @@ const FileIconAsset = ({ type, src, className = "" }) => {
     switch (type) {
         case 'img': return <img src={src} className={`w-full h-full object-cover rounded shadow-sm border-2 border-white pointer-events-none ${className}`} alt="" />;
         case 'folder': return <Folder size={56} className={`text-red-600 drop-shadow-md ${className}`} fill="#dc2626" />;
+        case 'note-link': return (
+            <div className={`relative flex items-center justify-center ${className}`}>
+                <FileText size={56} className="text-yellow-500 drop-shadow-md" strokeWidth={0.8} fill="#fbbf24" />
+                <span className="absolute bottom-2 right-0 text-[8px] font-bold text-yellow-600 bg-white px-0.5 rounded border border-gray-200 shadow-sm">NOTE</span>
+            </div>
+        );
+        case 'youtube': return (
+            <div className={`relative flex items-center justify-center ${className}`}>
+                <Video size={56} className="text-red-600 drop-shadow-md" strokeWidth={0.8} fill="#dc2626" />
+                <span className="absolute bottom-2 right-0 text-[8px] font-bold text-red-600 bg-white px-0.5 rounded border border-gray-200 shadow-sm">YT</span>
+            </div>
+        );
         case 'pdf': return (
             <div className={`relative flex items-center justify-center ${className}`}>
                 <FileText size={56} className="text-red-500 drop-shadow-md" strokeWidth={0.8} fill="white" />
@@ -214,7 +225,8 @@ const LoginScreen = ({ onLogin }) => {
         batch.set(doc(db, 'users', user.uid), {
             fileSystem: INITIAL_FILE_SYSTEM,
             settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
-            username: username
+            username: username,
+            family: 'Unknown' // Default family
         });
         await batch.commit();
 
@@ -301,8 +313,8 @@ const LoginScreen = ({ onLogin }) => {
              />
              <button type="submit" disabled={loading} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/10 hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight size={16} />
-             </button>
-          </div>
+        </button>
+      </div>
           
           {error && <div className="mt-3 text-red-300 text-xs text-center shadow-black drop-shadow-md bg-black/40 rounded px-2 py-1">{error}</div>}
           
@@ -449,9 +461,21 @@ const CalculatorApp = () => {
 };
 
 const QuickTimeApp = ({ file }) => {
+    const isYouTube = file?.src && (file.src.includes('youtube.com') || file.src.includes('youtu.be'));
+
     return (
         <div className="flex flex-col h-full bg-black text-white items-center justify-center">
-            {file && (file.type === 'mp4' || file.type === 'mov') ? (
+            {isYouTube ? (
+                 <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={file.src} 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen 
+                 />
+            ) : file && (file.type === 'mp4' || file.type === 'mov') ? (
                 <video src={file.src} controls className="max-h-full max-w-full w-full h-auto outline-none" autoPlay />
             ) : file && (file.type === 'mp3' || file.type === 'wav') ? (
                 <div className="flex flex-col items-center space-y-4">
@@ -623,22 +647,102 @@ const SafariApp = () => {
   );
 };
 
-const NotesApp = () => {
-  const [notes, setNotes] = useState([
-    { id: 1, title: 'My Christmas List', content: '# 🎄 My Christmas List 2024\n\n### Big Wishes\n- [ ] New MacBook Pro M4\n- [ ] Noise Cancelling Headphones\n- [ ] Espresso Machine\n\n### Stocking Stuffers\n- [ ] Fuzzy Socks\n- [ ] Dark Chocolate\n- [ ] Gift Cards', date: '10:42 AM' }, 
-    { id: 2, title: 'Cookie Recipe', content: '# Sugar Cookies\n1. 3 cups Flour\n2. 1 cup Butter\n3. 1 cup Sugar\n\n![Cookies](https://images.unsplash.com/photo-1499636138143-bd630f5cf388?w=200&q=80)', date: 'Yesterday' }
-  ]);
-  const [activeNoteId, setActiveNoteId] = useState(1);
+const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNote }) => {
+  const [notes, setNotes] = useState([]);
+  const [activeNoteId, setActiveNoteId] = useState(null);
   const [isPreview, setIsPreview] = useState(true); 
   const textareaRef = useRef(null);
+
+  // Helper to merge user's checked state into master list
+  const mergeListState = useCallback((masterContent, userContent) => {
+    if (!userContent) return masterContent;
+    const masterLines = masterContent.split('\n');
+    const userLines = userContent.split('\n');
+    const checkedItems = new Set();
+    userLines.forEach(line => {
+        if (line.includes('[x] ')) {
+            checkedItems.add(line.replace('[x] ', '').trim()); // Store the text without the box
+        }
+    });
+    return masterLines.map(line => {
+        // If master has a box
+        if (line.includes('[ ] ')) {
+            const cleanLine = line.replace('[ ] ', '').trim();
+            // If user checked this item
+            if (checkedItems.has(cleanLine)) {
+                return line.replace('[ ] ', '[x] ');
+            }
+        }
+        // If master has it checked (admin checked it?), we respect master? 
+        // Admin usually doesn't check boxes on master list, but if they did, it would come through as '[x] ' in masterLines.
+        // This logic preserves Master structure.
+        return line;
+    }).join('\n');
+  }, []);
+
+  useEffect(() => {
+    if (family === 'Admin') {
+        // Admin Views: Direct access to Master Lists
+        setNotes([
+            { id: 'Dorfman', title: 'Dorfman List', content: lists.Dorfman || '', date: 'Master List' },
+            { id: 'Maliglowka', title: 'Maliglowka List', content: lists.Maliglowka || '', date: 'Master List' },
+            { id: 'Unknown', title: 'Unknown List', content: lists.Unknown || '', date: 'Master List' }
+        ]);
+        if (!activeNoteId) setActiveNoteId('Dorfman');
+    } else {
+        // User View: Merged List
+        let masterContent = lists.Unknown || '';
+        if (family === 'Dorfman') masterContent = lists.Dorfman || '';
+        else if (family === 'Maliglowka') masterContent = lists.Maliglowka || '';
+
+        // Load user's previous state for this note
+        const userContent = userNotes['christmas2025'];
+        const mergedContent = mergeListState(masterContent, userContent);
+
+        setNotes([
+            { id: 'christmas2025', title: 'My Christmas List 2025', content: mergedContent, date: 'Today' }
+        ]);
+        if (!activeNoteId) setActiveNoteId('christmas2025');
+    }
+  }, [family, lists, userNotes, mergeListState]);
+
+  // If activeNoteId becomes invalid (e.g. switching families), reset it?
+  // The effect above handles initialization if empty.
 
   const activeNote = notes.find(n => n.id === activeNoteId) || { title: 'No Notes', content: '' };
 
   const updateNote = (content) => {
-    setNotes(prevNotes => prevNotes.map(n => n.id === activeNoteId ? { ...n, content, title: content.split('\n')[0].replace(/^[#\s]+/, '') || 'New Note' } : n));
+    const noteId = activeNoteId;
+    if (!noteId) return;
+
+    // Optimistic Update
+    setNotes(prevNotes => prevNotes.map(n => n.id === noteId ? { ...n, content, title: content.split('\n')[0].replace(/^[#\s]+/, '') || 'New Note' } : n));
+
+    // Propagate
+    if (family === 'Admin') {
+        if (noteId === 'Dorfman' || noteId === 'Maliglowka' || noteId === 'Unknown') {
+            onUpdateMasterList(noteId, content);
+        }
+    } else {
+        onUpdateUserNote(noteId, content);
+    }
+  };
+
+  const onCheckboxClick = (lineIndex) => {
+    const lines = activeNote.content.split('\n');
+    if (lineIndex >= lines.length) return;
+    
+    const line = lines[lineIndex];
+    if (line.includes('[ ] ')) {
+        lines[lineIndex] = line.replace('[ ] ', '[x] ');
+    } else if (line.includes('[x] ')) {
+        lines[lineIndex] = line.replace('[x] ', '[ ] ');
+    }
+    updateNote(lines.join('\n'));
   };
 
   const createNewNote = () => {
+      // Admin shouldn't really create new notes in this constrained version, but keep logic for now
       const newId = Date.now();
       const newNote = { id: newId, title: 'New Note', content: '', date: 'Just now' };
       setNotes(prev => [newNote, ...prev]); 
@@ -669,6 +773,11 @@ const NotesApp = () => {
   };
 
   const deleteNote = () => {
+      // Prevent deleting Master Lists
+      if (activeNoteId === 'Dorfman' || activeNoteId === 'Maliglowka' || activeNoteId === 'Unknown' || activeNoteId === 'christmas2025') {
+          alert("Cannot delete this list.");
+          return;
+      }
       const remaining = notes.filter(n => n.id !== activeNoteId);
       setNotes(remaining);
       if (remaining.length > 0) setActiveNoteId(remaining[0].id);
@@ -694,7 +803,7 @@ const NotesApp = () => {
           }
       };
 
-      const parseInline = (str, keyBase) => {
+      const parseInline = (str, keyBase, lineIndex) => {
           const parts = [];
           let lastIndex = 0;
           const regex = /(\*\*(.*?)\*\*)|(_(.*?)_)|(!?\[(.*?)\]\((.*?)\))/g;
@@ -707,12 +816,7 @@ const NotesApp = () => {
                   const isImg = match[5].startsWith('!');
                   const alt = match[6];
                   let src = match[7];
-                  
-                  // Security: Prevent javascript: links (XSS)
-                  if (src && src.trim().toLowerCase().startsWith('javascript:')) {
-                      src = '#blocked';
-                  }
-
+                  if (src && src.trim().toLowerCase().startsWith('javascript:')) { src = '#blocked'; }
                   if (isImg) parts.push(<img key={`${keyBase}-${match.index}`} src={src} alt={alt} className="rounded-lg my-2 max-h-64 object-cover shadow-md" />);
                   else parts.push(<a key={`${keyBase}-${match.index}`} href={src} target="_blank" rel="noreferrer" className="text-red-500 underline hover:text-red-600">{alt}</a>);
               }
@@ -723,6 +827,38 @@ const NotesApp = () => {
       };
 
       lines.forEach((line, i) => {
+          // Handle Blockquotes
+          if (line.trim().startsWith('> ')) {
+              flushList();
+              output.push(
+                  <blockquote key={i} className="border-l-4 border-gray-300 dark:border-gray-500 pl-4 italic text-gray-600 dark:text-gray-400 my-2">
+                      {parseInline(line.trim().substring(2), i)}
+                  </blockquote>
+              );
+              return;
+          }
+
+          // Handle Checkboxes specially
+          if (line.trim().startsWith('- [ ] ') || line.trim().startsWith('- [x] ')) {
+              if (listType !== null) flushList(); 
+              const isChecked = line.trim().startsWith('- [x] ');
+              const content = line.trim().substring(6);
+              output.push(
+                  <div key={i} className="flex items-start space-x-2 mb-1 ml-1 group">
+                      <input 
+                        type="checkbox" 
+                        checked={isChecked} 
+                        onChange={() => onCheckboxClick(i)}
+                        className="mt-1.5 w-4 h-4 accent-red-500 cursor-pointer" 
+                      />
+                      <span className={`dark:text-white leading-relaxed ${isChecked ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
+                        {parseInline(content, i)}
+                      </span>
+                  </div>
+              );
+              return;
+          }
+
           if (line.trim().startsWith('- ')) {
               if (listType !== 'ul') flushList();
               listType = 'ul';
@@ -746,12 +882,17 @@ const NotesApp = () => {
       return output;
   };
 
+  // Determine if Read-Only Mode
+  // Admin: Can edit Master Lists.
+  // User: Can ONLY click checkboxes (which is handled by input logic, text editing hidden).
+  const isReadOnly = family !== 'Admin'; 
+
   return (
     <div className="flex h-full bg-white dark:bg-[#1e1e1e]">
       <div className="w-48 bg-gray-50 dark:bg-[#282828] border-r border-gray-200 dark:border-black/50 flex flex-col">
         <div className="h-10 flex items-center justify-between px-3 border-b border-gray-200 dark:border-black/50">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">iCloud</span>
-            <button onClick={createNewNote} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-500"><Plus size={14} /></button>
+            {!isReadOnly && <button onClick={createNewNote} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-500"><Plus size={14} /></button>}
         </div>
         <div className="flex-1 overflow-y-auto">
           {notes.map(note => (
@@ -763,24 +904,27 @@ const NotesApp = () => {
         </div>
       </div>
       <div className="flex-1 flex flex-col bg-white dark:bg-[#1e1e1e]">
-         <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a]">
-            <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Bold"><Bold size={16} /></button>
-            <button onClick={() => insertText('_', '_')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Italic"><Italic size={16} /></button>
-            <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
-            <button onClick={() => insertText('# ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Heading"><Heading1 size={16} /></button>
-            <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Bullet List"><List size={16} /></button>
-            <button onClick={() => insertText('1. ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Numbered List"><ListOrdered size={16} /></button>
-            <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
-            <button onClick={insertLink} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Link"><Link size={16} /></button>
-            <button onClick={() => { const url = prompt('Enter Image URL:'); if(url) insertText('![Image](', ` ${url})`); }} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Image"><ImageIcon size={16} /></button>
-            <div className="flex-1" />
-            <button onClick={deleteNote} className="p-1.5 rounded hover:bg-red-100 hover:text-red-500 text-gray-500" title="Delete Note"><Trash size={16} /></button>
-            <button onClick={() => setIsPreview(!isPreview)} className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 ${isPreview ? 'text-red-500' : 'text-gray-500'}`} title="Toggle Preview">
-                {isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-         </div>
+         {!isReadOnly && (
+             <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a] overflow-x-auto scrollbar-none min-w-0">
+                <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Bold"><Bold size={16} /></button>
+                <button onClick={() => insertText('_', '_')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Italic"><Italic size={16} /></button>
+                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1 flex-shrink-0" />
+                <button onClick={() => insertText('# ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Heading"><Heading1 size={16} /></button>
+                <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Bullet List"><List size={16} /></button>
+                <button onClick={() => insertText('1. ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Numbered List"><ListOrdered size={16} /></button>
+                <button onClick={() => insertText('> ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Quote"><Quote size={16} /></button>
+                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1 flex-shrink-0" />
+                <button onClick={insertLink} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Link"><Link size={16} /></button>
+                <button onClick={() => { const url = prompt('Enter Image URL:'); if(url) insertText('![Image](', ` ${url})`); }} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Image"><ImageIcon size={16} /></button>
+                <div className="flex-1 min-w-[10px]" />
+                <button onClick={deleteNote} className="p-1.5 rounded hover:bg-red-100 hover:text-red-500 text-gray-500 flex-shrink-0" title="Delete Note"><Trash size={16} /></button>
+                <button onClick={() => setIsPreview(!isPreview)} className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 flex-shrink-0 ${isPreview ? 'text-red-500' : 'text-gray-500'}`} title="Toggle Preview">
+                    {isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+             </div>
+         )}
          <div className="flex-1 overflow-auto relative">
-            {isPreview ? (
+            {(isPreview || isReadOnly) ? (
                 <div className="p-8 prose dark:prose-invert max-w-none">{renderMarkdown(activeNote.content)}</div>
             ) : (
                 <textarea 
@@ -820,7 +964,28 @@ const PreviewApp = ({ file }) => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#2a2a2a] text-white"><div className="flex-1 flex items-center justify-center overflow-hidden bg-[#1e1e1e]">{file.type === 'img' ? <img src={file.src} className="max-w-full max-h-full object-contain shadow-2xl" alt={file.name} /> : <div className="p-8 bg-white text-black h-[80%] w-[80%] shadow-xl whitespace-pre-wrap font-mono text-sm overflow-auto">{file.content || "Binary content not displayed."}</div>}</div></div>
+    <div className="flex flex-col h-full bg-[#2a2a2a] text-white">
+        <div className="flex-1 flex items-center justify-center overflow-hidden bg-[#1e1e1e]">
+            {file.type === 'img' ? (
+                <img src={file.src} className="max-w-full max-h-full object-contain shadow-2xl" alt={file.name} />
+            ) : (
+                <div className="p-8 bg-white text-black h-[80%] w-[80%] shadow-xl overflow-auto">
+                    {file.content ? (
+                        <pre className="whitespace-pre-wrap font-mono text-sm">{file.content}</pre>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center space-y-4">
+                             <Gift size={48} className="text-red-500" />
+                             <div className="text-center">
+                                <p className="font-bold text-lg text-red-600">Christmas Magic!</p>
+                                <p className="text-gray-600 mt-2">This gift cannot be opened yet.</p>
+                                <p className="text-xs text-gray-400 mt-4">(Binary format not supported)</p>
+                             </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    </div>
   );
 };
 
@@ -901,7 +1066,7 @@ const Window = ({ window, onClose, onMinimize, onMaximize, onFocus, isActive, up
   const handleResizeDown = (e) => {
     e.preventDefault(); e.stopPropagation();
     const startW = window.size.w; const startH = window.size.h; const startX = e.clientX; const startY = e.clientY;
-    const handleMouseMove = (ev) => { updateSize(window.id, Math.max(300, startW + (ev.clientX - startX)), Math.max(200, startH + (ev.clientY - startY))); };
+    const handleMouseMove = (ev) => { updateSize(window.id, Math.max(350, startW + (ev.clientX - startX)), Math.max(250, startH + (ev.clientY - startY))); };
     const handleMouseUp = () => { document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); };
     document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp);
   };
@@ -1023,8 +1188,10 @@ const Spotlight = ({ isOpen, onClose, onLaunch, fileSystem }) => {
                              // If folder, construct path and launch Finder
                              const path = file.parentPath === '/' ? `/${file.name}` : `${file.parentPath}/${file.name}`;
                              onLaunch('finder', { initialPath: path });
+                        } else if (file.type === 'note-link') {
+                             onLaunch('notes');
                         } else {
-                             onLaunch(file.type === 'txt' ? 'textedit' : file.type === 'pdf' ? 'preview' : file.type === 'mp4' || file.type === 'mov' || file.type === 'mp3' || file.type === 'wav' ? 'quicktime' : 'preview', { file, title: file.name });
+                             onLaunch(file.type === 'txt' ? 'textedit' : file.type === 'pdf' ? 'preview' : file.type === 'mp4' || file.type === 'mov' || file.type === 'mp3' || file.type === 'wav' || file.type === 'youtube' ? 'quicktime' : 'preview', { file, title: file.name });
                         }
                         onClose(); 
                     }}
@@ -1065,10 +1232,10 @@ const ContextMenu = ({ x, y, onClose, onAction, targetId, showFileOps }) => (
     
     <div className="hover:bg-red-500 hover:text-white px-4 py-1 cursor-pointer" onClick={() => onAction('wallpaper')}>Change Wallpaper</div>
     <div className="hover:bg-red-500 hover:text-white px-4 py-1 cursor-pointer" onClick={() => onAction('cleanup')}>Clean Up</div>
-  </div>
+      </div>
 );
 
-const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpaper, setWallpaper, username, onUpdateUsername }) => {
+const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpaper, setWallpaper, username, onUpdateUsername, onRestore }) => {
     const [newUsername, setNewUsername] = useState(username || '');
     
     useEffect(() => { setNewUsername(username || ''); }, [username]);
@@ -1092,8 +1259,8 @@ const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpap
                     disabled={newUsername === username}
                 >
                     Update
-                </button>
-             </div>
+        </button>
+      </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
@@ -1104,8 +1271,22 @@ const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpap
              <span>Snow Effect</span>
              <div onClick={() => setSnowEffect(!snowEffect)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${snowEffect ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${snowEffect ? 'translate-x-6' : ''}`} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 mb-6">
              {Object.entries(WALLPAPERS).map(([k, v]) => (<img key={k} src={v} onClick={() => setWallpaper(v)} className={`w-full h-24 object-cover rounded border-2 cursor-pointer ${wallpaper === v ? 'border-red-500' : 'border-transparent'}`} alt={k} />))}
+          </div>
+
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-bold text-red-500 uppercase mb-2">Danger Zone</h3>
+            <button 
+                onClick={onRestore}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+            >
+                <RotateCw size={16} />
+                <span>Restore Default Settings & Files</span>
+            </button>
+            <p className="text-[10px] text-gray-500 mt-2 text-center">
+                This will reset your desktop, files, and settings to default. Your family status will be preserved.
+            </p>
           </div>
         </div>
     );
@@ -1124,6 +1305,9 @@ const App = () => {
   const [snowEffect, setSnowEffect] = useState(true);
   const [wallpaper, setWallpaper] = useState(WALLPAPERS['Cozy Fireplace']);
   const [username, setUsername] = useState('');
+  const [family, setFamily] = useState('Unknown');
+  const [lists, setLists] = useState({ Dorfman: '', Maliglowka: '', Unknown: '' });
+  const [userNotes, setUserNotes] = useState({}); // Persist user-specific note data (e.g. checkboxes)
   const [date, setDate] = useState(new Date());
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
@@ -1135,7 +1319,92 @@ const App = () => {
   const [draggedFileId, setDraggedFileId] = useState(null);
   const [phantomFile, setPhantomFile] = useState(null); // For Finder -> Desktop Drag
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize/Fetch System Files
+  useEffect(() => {
+      const initSystem = async () => {
+          try {
+              const sysRef = doc(db, 'files', 'defaults');
+              const sysSnap = await getDoc(sysRef);
+              
+              if (!sysSnap.exists()) {
+                  // Seed initial defaults if missing
+                  await setDoc(sysRef, { fileSystem: INITIAL_FILE_SYSTEM });
+              }
+          } catch (e) {
+              console.error("System init error:", e);
+          }
+      };
+      initSystem();
+  }, []);
+
+  // Helper to merge system files into user files
+  const mergeSystemFiles = useCallback((userFs, systemFs) => {
+      if (!userFs || !systemFs) return userFs || systemFs;
+      const merged = JSON.parse(JSON.stringify(userFs)); // Deep copy
+
+      // 1. Remove deprecated f1 (Christmas List text)
+      if (merged['/Desktop']) {
+          merged['/Desktop'] = merged['/Desktop'].filter(f => f.id !== 'f1');
+      }
+
+      // 2. Process System Files
+      Object.entries(systemFs).forEach(([path, files]) => {
+          if (!merged[path]) merged[path] = [];
+          
+          files.forEach(sysFile => {
+              const existingIdx = merged[path].findIndex(f => f.id === sysFile.id);
+              
+              if (existingIdx === -1) {
+                  // New system file - Add it
+                  // Ensure we don't duplicate if it was moved to another folder?
+                  // For simplicity, check if ID exists ANYWHERE in user FS
+                  const idExists = Object.values(merged).flat().some(f => f.id === sysFile.id);
+                  if (!idExists) {
+                      merged[path].push(sysFile);
+                  }
+              } else {
+                  // Existing system file - Merge updates
+                  const existing = merged[path][existingIdx];
+                  const updated = { ...existing, type: sysFile.type };
+                  
+                  if (sysFile.src !== undefined) updated.src = sysFile.src;
+                  if (sysFile.content !== undefined) updated.content = sysFile.content;
+                  
+                  merged[path][existingIdx] = updated;
+              }
+          });
+      });
+      return merged;
+  }, []);
+
+  // Fetch Lists
+  useEffect(() => {
+      const fetchLists = async () => {
+          if (!isLoggedIn) return;
+          
+          try {
+              const dorfmanRef = doc(db, 'lists', 'Dorfman');
+              const maliglowkaRef = doc(db, 'lists', 'Maliglowka');
+              const unknownRef = doc(db, 'lists', 'Unknown');
+              
+              const dorfmanSnap = await getDoc(dorfmanRef);
+              const maliglowkaSnap = await getDoc(maliglowkaRef);
+              const unknownSnap = await getDoc(unknownRef);
+
+              setLists({
+                  Dorfman: dorfmanSnap.exists() ? dorfmanSnap.data()?.content : '',
+                  Maliglowka: maliglowkaSnap.exists() ? maliglowkaSnap.data()?.content : '',
+                  Unknown: unknownSnap.exists() ? unknownSnap.data()?.content : ''
+              });
+          } catch (e) {
+              console.error("Error fetching lists:", e);
+          }
+      };
+      fetchLists();
+  }, [isLoggedIn]);
 
   // Auth Listener
   useEffect(() => {
@@ -1144,6 +1413,7 @@ const App = () => {
         setUser(currentUser);
         setIsLoggedIn(true);
         setIsLoadingData(true);
+        setLoadError(false);
         // Load user data or create if not exists
         const userDocRef = doc(db, "users", currentUser.uid);
         
@@ -1151,23 +1421,54 @@ const App = () => {
         const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data.fileSystem) setFileSystem(data.fileSystem);
-            if (data.username) setUsername(data.username);
-            if (data.settings) {
-              if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
-              if (data.settings.darkMode !== undefined) setDarkMode(data.settings.darkMode);
-              if (data.settings.snowEffect !== undefined) setSnowEffect(data.settings.snowEffect);
+            
+            const loadedFs = data.fileSystem ? mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM) : INITIAL_FILE_SYSTEM;
+            const loadedSettings = {
+                wallpaper: data.settings?.wallpaper || WALLPAPERS['Cozy Fireplace'],
+                darkMode: data.settings?.darkMode !== undefined ? data.settings.darkMode : true,
+                snowEffect: data.settings?.snowEffect !== undefined ? data.settings.snowEffect : true
+            };
+            const loadedUsername = data.username || '';
+            const loadedFamily = data.family || 'Unknown';
+            const loadedNotes = data.notes || {};
+
+            // Update reference to prevent immediate save loop
+            lastSavedState.current = {
+                fileSystem: loadedFs,
+                settings: loadedSettings,
+                username: loadedUsername,
+                family: loadedFamily,
+                notes: loadedNotes
+            };
+
+            // Ignore local writes for fileSystem to prevent loop/overwrite
+            if (!docSnap.metadata.hasPendingWrites) {
+                setFileSystem(prev => JSON.stringify(prev) === JSON.stringify(loadedFs) ? prev : loadedFs);
             }
+
+            if (data.username) setUsername(data.username);
+            if (data.family) setFamily(data.family);
+            else setFamily('Unknown'); // Explicitly default if missing
+            
+            if (data.notes) setUserNotes(data.notes); // Load user notes
+
+            setWallpaper(loadedSettings.wallpaper);
+            setDarkMode(loadedSettings.darkMode);
+            setSnowEffect(loadedSettings.snowEffect);
+
           } else {
             // Initialize new user
             setDoc(userDocRef, {
               fileSystem: INITIAL_FILE_SYSTEM,
-              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true }
+              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
+              family: 'Unknown',
+              notes: {}
             });
           }
           setIsLoadingData(false);
         }, (error) => {
            console.error("Error fetching user data:", error);
+           setLoadError(true);
            setIsLoadingData(false);
         });
         return () => unsubDoc();
@@ -1175,6 +1476,7 @@ const App = () => {
         setUser(null);
         setIsLoggedIn(false);
         setIsLoadingData(false);
+        setLoadError(false);
       }
     });
     return () => unsubscribe();
@@ -1182,32 +1484,45 @@ const App = () => {
 
   // Sync state to Firestore (Debounced)
   const saveTimeoutRef = useRef(null);
+  const lastSavedState = useRef(null);
+
   const saveState = useCallback(() => {
     if (!user) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     
+    const currentState = {
+        fileSystem,
+        settings: { wallpaper, darkMode, snowEffect },
+        username,
+        family,
+        notes: userNotes
+    };
+
+    // Deep compare with last known server state
+    if (lastSavedState.current && JSON.stringify(currentState) === JSON.stringify(lastSavedState.current)) {
+        return;
+    }
+
     setIsSaving(true);
     saveTimeoutRef.current = setTimeout(() => {
       const userDocRef = doc(db, "users", user.uid);
-      // Only update what changed - simplified here to update structure
-      setDoc(userDocRef, {
-        fileSystem,
-        settings: { wallpaper, darkMode, snowEffect },
-        username
-      }, { merge: true })
-      .then(() => setIsSaving(false))
+      setDoc(userDocRef, currentState, { merge: true })
+      .then(() => {
+          setIsSaving(false);
+          lastSavedState.current = currentState; // Update ref on successful save
+      })
       .catch((err) => {
           console.error("Error saving state:", err);
           setIsSaving(false);
       });
-    }, 1000); // Reduced debounce to 1 second
-  }, [user, fileSystem, wallpaper, darkMode, snowEffect, username]);
+    }, 1000); 
+  }, [user, fileSystem, wallpaper, darkMode, snowEffect, username, family, userNotes]);
 
   useEffect(() => {
-    if (isLoggedIn && !booting && !isLoadingData) {
+    if (isLoggedIn && !booting && !isLoadingData && !loadError) {
         saveState();
     }
-  }, [fileSystem, wallpaper, darkMode, snowEffect, username, isLoggedIn, booting, isLoadingData, saveState]);
+  }, [fileSystem, wallpaper, darkMode, snowEffect, username, family, userNotes, isLoggedIn, booting, isLoadingData, loadError, saveState]);
 
   useEffect(() => {
     const t = setInterval(() => setDate(new Date()), 1000);
@@ -1215,6 +1530,20 @@ const App = () => {
     window.addEventListener('keydown', handleKey);
     return () => { clearInterval(t); window.removeEventListener('keydown', handleKey); };
   }, []);
+
+  // Auto-launch Notes on Login
+  useEffect(() => {
+      if (isLoggedIn && !isLoadingData) {
+          // Calculate center
+          const isMobile = window.innerWidth < 640;
+          const width = isMobile ? 320 : 800;
+          const height = isMobile ? 500 : 600;
+          const x = Math.max(0, (window.innerWidth - width) / 2);
+          const y = Math.max(0, (window.innerHeight - height) / 2);
+          
+          launchApp('notes', { position: { x, y } });
+      }
+  }, [isLoggedIn, isLoadingData]);
 
   // --- Desktop Drag Logic ---
   const handleIconDrag = (e, fileId) => {
@@ -1370,7 +1699,7 @@ const App = () => {
   };
 
   const handleCleanUp = () => {
-      setFileSystem(prev => ({ ...prev, '/Desktop': prev['/Desktop'].map((f, i) => ({ ...f, x: 20, y: 20 + (i * 170) })) }));
+      setFileSystem(prev => ({ ...prev, '/Desktop': prev['/Desktop'].map((f, i) => ({ ...f, x: 20, y: 20 + (i * 120) })) }));
       setContextMenu(null);
   };
 
@@ -1412,20 +1741,42 @@ const App = () => {
   const launchApp = (appId, props = {}) => {
     const existing = windows.find(w => w.appId === appId && !w.isMultiInstance && !props.forceNew);
     if (existing) {
-      if (existing.isMinimized) setWindows(prev => prev.map(w => w.id === existing.id ? { ...w, isMinimized: false, zIndex: zIndex + 1 } : w));
+      const newWindows = windows.map(w => {
+          if (w.id === existing.id) {
+              return { 
+                  ...w, 
+                  isMinimized: false, 
+                  zIndex: zIndex + 1,
+                  // Update position if provided
+                  ...(props.position ? { position: props.position } : {})
+              };
+          }
+          return w;
+      });
+      setWindows(newWindows);
       setActiveWindowId(existing.id); setZIndex(z => z + 1); return;
     }
     const id = Date.now();
     const isMobile = window.innerWidth < 640;
+    
+    let size = { w: isMobile ? 320 : 800, h: isMobile ? 500 : 600 };
+    if (appId === 'calculator') size = { w: 280, h: 460 }; 
+    if (appId === 'notes') size = { w: 800, h: 600 };
+    if (appId === 'quicktime') size = { w: 500, h: 350 };
+    if (props.size) size = props.size;
+
+    const cascadeOffset = isMobile ? 0 : (windows.length * 30) % 150;
+    const position = props.position || { 
+        x: isMobile ? 20 : Math.max(0, (window.innerWidth - size.w) / 2) + cascadeOffset, 
+        y: isMobile ? 50 : Math.max(0, (window.innerHeight - size.h) / 2) + cascadeOffset
+    };
+
     const config = {
       id, appId, title: props.title || appId.charAt(0).toUpperCase() + appId.slice(1),
-      position: { x: isMobile ? 20 : 100 + (windows.length * 20), y: isMobile ? 50 : 50 + (windows.length * 20) },
-      size: { w: isMobile ? 320 : 800, h: isMobile ? 500 : 600 },
+      position,
+      size,
       zIndex: zIndex + 1, isMultiInstance: appId === 'preview' || appId === 'textedit' || appId === 'finder' || appId === 'quicktime', ...props
     };
-    if (appId === 'calculator') config.size = { w: 280, h: 460 }; 
-    if (appId === 'notes') config.size = { w: 600, h: 450 };
-    if (appId === 'quicktime') config.size = { w: 500, h: 350 };
     setWindows([...windows, config]); setActiveWindowId(id); setZIndex(z => z + 1);
   };
 
@@ -1469,11 +1820,39 @@ const App = () => {
       }
   };
 
+  const handleUpdateMasterList = async (listName, content) => {
+      setLists(prev => ({ ...prev, [listName]: content }));
+      try {
+          await setDoc(doc(db, 'lists', listName), { content }, { merge: true });
+      } catch (e) {
+          console.error("Error updating master list:", e);
+      }
+  };
+
+  const handleUpdateUserNote = (noteId, content) => {
+      setUserNotes(prev => ({ ...prev, [noteId]: content }));
+  };
+
+  const handleRestore = async () => {
+      if (confirm("Are you sure you want to reset your account? This will delete all custom files, notes, and settings. This action cannot be undone.")) {
+          setFileSystem(INITIAL_FILE_SYSTEM);
+          setWallpaper(WALLPAPERS['Cozy Fireplace']);
+          setDarkMode(true);
+          setSnowEffect(true);
+          setUserNotes({});
+          // Force immediate save? The useEffect will pick up changes.
+          alert("Account restored to defaults.");
+      }
+  };
+
   const renderContent = (win) => {
     switch(win.appId) {
-      case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name })} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
+      case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => {
+          if (f.type === 'note-link') launchApp('notes');
+          else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' || f.type === 'youtube' ? 'quicktime' : 'preview', { file: f, title: f.name });
+      }} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
       case 'safari': return <SafariApp />;
-      case 'notes': return <NotesApp />;
+      case 'notes': return <NotesApp family={family} lists={lists} userNotes={userNotes} onUpdateMasterList={handleUpdateMasterList} onUpdateUserNote={handleUpdateUserNote} />;
       case 'terminal': return <TerminalApp fileSystem={fileSystem} setFileSystem={setFileSystem} />;
       case 'preview': return <PreviewApp file={win.file} />;
       case 'textedit': return <TextEditApp file={win.file} onSave={updateFileContent} />;
@@ -1485,6 +1864,7 @@ const App = () => {
             snowEffect={snowEffect} setSnowEffect={setSnowEffect}
             wallpaper={wallpaper} setWallpaper={setWallpaper}
             username={username} onUpdateUsername={handleUsernameChange}
+            onRestore={handleRestore}
         />
       );
       default: return <div className="flex items-center justify-center h-full text-gray-500">App Under Construction</div>;
@@ -1529,7 +1909,8 @@ const App = () => {
              onDragStart={handleIconDrag} 
              onDoubleClick={(f) => {
                  if (f.type === 'folder') launchApp('finder', { initialPath: `/Desktop/${f.name}` });
-                 else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name });
+                 else if (f.type === 'note-link') launchApp('notes');
+                 else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' || f.type === 'youtube' ? 'quicktime' : 'preview', { file: f, title: f.name });
              }}
              onContextMenu={(e, f) => { setContextMenu({ x: e.clientX, y: e.clientY, targetId: f.id, showFileOps: true }); }}
              isRenaming={renamingId === file.id}

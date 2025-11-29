@@ -6,7 +6,7 @@ import {
   LogOut, Power, RefreshCw, Moon, File, List, Bold, Italic, 
   ListOrdered, Link, Trash, Type, Eye, EyeOff, Heading1, Plus,
   FileSpreadsheet, Box, FileCode, Film, Video, Music, User, ArrowRight, Lock,
-  Snowflake, Gift, Mail
+  Snowflake, Gift, Mail, Quote
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
@@ -804,6 +804,17 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
       };
 
       lines.forEach((line, i) => {
+          // Handle Blockquotes
+          if (line.trim().startsWith('> ')) {
+              flushList();
+              output.push(
+                  <blockquote key={i} className="border-l-4 border-gray-300 dark:border-gray-500 pl-4 italic text-gray-600 dark:text-gray-400 my-2">
+                      {parseInline(line.trim().substring(2), i)}
+                  </blockquote>
+              );
+              return;
+          }
+
           // Handle Checkboxes specially
           if (line.trim().startsWith('- [ ] ') || line.trim().startsWith('- [x] ')) {
               if (listType !== null) flushList(); 
@@ -871,19 +882,20 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
       </div>
       <div className="flex-1 flex flex-col bg-white dark:bg-[#1e1e1e]">
          {!isReadOnly && (
-             <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a]">
-                <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Bold"><Bold size={16} /></button>
-                <button onClick={() => insertText('_', '_')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Italic"><Italic size={16} /></button>
-                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
-                <button onClick={() => insertText('# ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Heading"><Heading1 size={16} /></button>
-                <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Bullet List"><List size={16} /></button>
-                <button onClick={() => insertText('1. ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Numbered List"><ListOrdered size={16} /></button>
-                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
-                <button onClick={insertLink} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Link"><Link size={16} /></button>
-                <button onClick={() => { const url = prompt('Enter Image URL:'); if(url) insertText('![Image](', ` ${url})`); }} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300" title="Image"><ImageIcon size={16} /></button>
-                <div className="flex-1" />
-                <button onClick={deleteNote} className="p-1.5 rounded hover:bg-red-100 hover:text-red-500 text-gray-500" title="Delete Note"><Trash size={16} /></button>
-                <button onClick={() => setIsPreview(!isPreview)} className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 ${isPreview ? 'text-red-500' : 'text-gray-500'}`} title="Toggle Preview">
+             <div className="h-10 border-b border-gray-200 dark:border-black/50 flex items-center px-2 space-x-1 bg-gray-50 dark:bg-[#2a2a2a] overflow-x-auto scrollbar-none min-w-0">
+                <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Bold"><Bold size={16} /></button>
+                <button onClick={() => insertText('_', '_')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Italic"><Italic size={16} /></button>
+                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1 flex-shrink-0" />
+                <button onClick={() => insertText('# ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Heading"><Heading1 size={16} /></button>
+                <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Bullet List"><List size={16} /></button>
+                <button onClick={() => insertText('1. ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Numbered List"><ListOrdered size={16} /></button>
+                <button onClick={() => insertText('> ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Quote"><Quote size={16} /></button>
+                <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1 flex-shrink-0" />
+                <button onClick={insertLink} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Link"><Link size={16} /></button>
+                <button onClick={() => { const url = prompt('Enter Image URL:'); if(url) insertText('![Image](', ` ${url})`); }} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 flex-shrink-0" title="Image"><ImageIcon size={16} /></button>
+                <div className="flex-1 min-w-[10px]" />
+                <button onClick={deleteNote} className="p-1.5 rounded hover:bg-red-100 hover:text-red-500 text-gray-500 flex-shrink-0" title="Delete Note"><Trash size={16} /></button>
+                <button onClick={() => setIsPreview(!isPreview)} className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-white/10 flex-shrink-0 ${isPreview ? 'text-red-500' : 'text-gray-500'}`} title="Toggle Preview">
                     {isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
              </div>
@@ -1010,7 +1022,7 @@ const Window = ({ window, onClose, onMinimize, onMaximize, onFocus, isActive, up
   const handleResizeDown = (e) => {
     e.preventDefault(); e.stopPropagation();
     const startW = window.size.w; const startH = window.size.h; const startX = e.clientX; const startY = e.clientY;
-    const handleMouseMove = (ev) => { updateSize(window.id, Math.max(300, startW + (ev.clientX - startX)), Math.max(200, startH + (ev.clientY - startY))); };
+    const handleMouseMove = (ev) => { updateSize(window.id, Math.max(350, startW + (ev.clientX - startX)), Math.max(250, startH + (ev.clientY - startY))); };
     const handleMouseUp = () => { document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); };
     document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp);
   };
@@ -1371,8 +1383,8 @@ const App = () => {
       if (isLoggedIn && !isLoadingData) {
           // Calculate center
           const isMobile = window.innerWidth < 640;
-          const width = isMobile ? 320 : 600;
-          const height = isMobile ? 500 : 450;
+          const width = isMobile ? 320 : 800;
+          const height = isMobile ? 500 : 600;
           const x = Math.max(0, (window.innerWidth - width) / 2);
           const y = Math.max(0, (window.innerHeight - height) / 2);
           
@@ -1600,7 +1612,7 @@ const App = () => {
       zIndex: zIndex + 1, isMultiInstance: appId === 'preview' || appId === 'textedit' || appId === 'finder' || appId === 'quicktime', ...props
     };
     if (appId === 'calculator') config.size = { w: 280, h: 460 }; 
-    if (appId === 'notes') config.size = { w: 600, h: 450 };
+    if (appId === 'notes') config.size = { w: 800, h: 600 };
     if (appId === 'quicktime') config.size = { w: 500, h: 350 };
     setWindows([...windows, config]); setActiveWindowId(id); setZIndex(z => z + 1);
   };

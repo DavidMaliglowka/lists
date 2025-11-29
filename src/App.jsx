@@ -61,6 +61,42 @@ const INITIAL_FILE_SYSTEM = {
   ]
 };
 
+const FAMILY_ASSETS = {
+    'Dorfman': {
+        song: { name: 'Christmas at Chilis.mp3', src: `${import.meta.env.BASE_URL}audio/Christmas_at_Chilis.mp3` },
+        familyPic: { name: 'Family Photo.png', src: `${import.meta.env.BASE_URL}images/christmas-switzerland.png` },
+        extra: { name: 'Diet Coke.png', src: `${import.meta.env.BASE_URL}images/diet-coke.png` }
+    },
+    'Maliglowka': {
+        song: { name: 'Charlie the Christmas Pup.mp3', src: `${import.meta.env.BASE_URL}audio/Charlie_the_Christmas_Pup.mp3` },
+        familyPic: { name: 'Family Photo.png', src: `${import.meta.env.BASE_URL}images/christmas-disney.png` },
+        extra: { name: 'Charlie Presents.png', src: `${import.meta.env.BASE_URL}images/charlie-presents.png` }
+    },
+    'Unknown': {
+        song: { name: 'Jingle Bells.mp3', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        familyPic: { name: 'Family_Xmas.jpg', src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80' }
+    }
+};
+
+const getInitialFileSystem = (family) => {
+    const assets = FAMILY_ASSETS[family] || FAMILY_ASSETS['Unknown'];
+    const fs = JSON.parse(JSON.stringify(INITIAL_FILE_SYSTEM));
+
+    const desktop = fs['/Desktop'];
+    const song = desktop.find(f => f.id === 'f8');
+    if (song) { song.name = assets.song.name; song.src = assets.song.src; }
+
+    const pictures = fs['/Pictures'];
+    const pic = pictures.find(f => f.id === 'f6');
+    if (pic) { pic.name = assets.familyPic.name; pic.src = assets.familyPic.src; }
+
+    if (assets.extra) {
+        // Check if f9 already exists (in case of repeated merges it might differ, but this is getInitial)
+        pictures.push({ id: 'f9', name: assets.extra.name, type: 'img', size: '2.0 MB', date: 'Today', src: assets.extra.src });
+    }
+    return fs;
+};
+
 /**
  * --- UTILITIES ---
  */
@@ -1372,6 +1408,7 @@ const App = () => {
                   
                   if (sysFile.src !== undefined) updated.src = sysFile.src;
                   if (sysFile.content !== undefined) updated.content = sysFile.content;
+                  if (sysFile.name !== undefined) updated.name = sysFile.name;
                   
                   merged[path][existingIdx] = updated;
               }
@@ -1422,14 +1459,16 @@ const App = () => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             
-            const loadedFs = data.fileSystem ? mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM) : INITIAL_FILE_SYSTEM;
+            const loadedFamily = data.family || 'Unknown';
+            const targetDefaults = getInitialFileSystem(loadedFamily);
+
+            const loadedFs = data.fileSystem ? mergeSystemFiles(data.fileSystem, targetDefaults) : targetDefaults;
             const loadedSettings = {
                 wallpaper: data.settings?.wallpaper || WALLPAPERS['Cozy Fireplace'],
                 darkMode: data.settings?.darkMode !== undefined ? data.settings.darkMode : true,
                 snowEffect: data.settings?.snowEffect !== undefined ? data.settings.snowEffect : true
             };
             const loadedUsername = data.username || '';
-            const loadedFamily = data.family || 'Unknown';
             const loadedNotes = data.notes || {};
 
             // Update reference to prevent immediate save loop
@@ -1459,7 +1498,7 @@ const App = () => {
           } else {
             // Initialize new user
             setDoc(userDocRef, {
-              fileSystem: INITIAL_FILE_SYSTEM,
+              fileSystem: getInitialFileSystem('Unknown'),
               settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
               family: 'Unknown',
               notes: {}
@@ -1835,7 +1874,7 @@ const App = () => {
 
   const handleRestore = async () => {
       if (confirm("Are you sure you want to reset your account? This will delete all custom files, notes, and settings. This action cannot be undone.")) {
-          setFileSystem(INITIAL_FILE_SYSTEM);
+          setFileSystem(getInitialFileSystem(family));
           setWallpaper(WALLPAPERS['Cozy Fireplace']);
           setDarkMode(true);
           setSnowEffect(true);

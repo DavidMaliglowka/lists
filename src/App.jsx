@@ -1404,18 +1404,21 @@ const App = () => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             
-            if (data.fileSystem) {
-                // Merge with latest system defaults
-                const merged = mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM);
-                setFileSystem(prev => {
-                    if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
-                    return merged;
-                });
-            } else {
-                setFileSystem(prev => {
-                    if (JSON.stringify(prev) === JSON.stringify(INITIAL_FILE_SYSTEM)) return prev;
-                    return INITIAL_FILE_SYSTEM;
-                });
+            // Ignore local writes for fileSystem to prevent loop/overwrite
+            if (!docSnap.metadata.hasPendingWrites) {
+                if (data.fileSystem) {
+                    // Merge with latest system defaults
+                    const merged = mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM);
+                    setFileSystem(prev => {
+                        if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
+                        return merged;
+                    });
+                } else {
+                    setFileSystem(prev => {
+                        if (JSON.stringify(prev) === JSON.stringify(INITIAL_FILE_SYSTEM)) return prev;
+                        return INITIAL_FILE_SYSTEM;
+                    });
+                }
             }
 
             if (data.username) setUsername(data.username);
@@ -1661,7 +1664,7 @@ const App = () => {
   };
 
   const handleCleanUp = () => {
-      setFileSystem(prev => ({ ...prev, '/Desktop': prev['/Desktop'].map((f, i) => ({ ...f, x: 20, y: 20 + (i * 170) })) }));
+      setFileSystem(prev => ({ ...prev, '/Desktop': prev['/Desktop'].map((f, i) => ({ ...f, x: 20, y: 20 + (i * 120) })) }));
       setContextMenu(null);
   };
 

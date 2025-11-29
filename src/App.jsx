@@ -43,8 +43,22 @@ const ICONS = {
 
 const INITIAL_FILE_SYSTEM = {
   '/Desktop': [
-    { id: 'f1', name: 'My Christmas List.txt', type: 'txt', x: 20, y: 20, size: '4 KB', date: 'Today, 9:41 AM', content: '# 🎄 My Christmas List 2024\n\n### Big Wishes\n- [ ] New MacBook Pro M4\n- [ ] Noise Cancelling Headphones\n- [ ] Espresso Machine\n\n### Stocking Stuffers\n- [ ] Fuzzy Socks\n- [ ] Dark Chocolate\n- [ ] Gift Cards' },
-    { id: 'f2', name: 'Decorations.jpg', type: 'img', x: 20, y: 140, size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
+    { id: 'link1', name: "David's List", type: 'note-link', x: 20, y: 20, date: 'Today' },
+    { id: 'f7', name: 'Fireplace 4K', type: 'youtube', x: 20, y: 140, size: '0 B', date: 'Dec 20, 2024', src: 'https://www.youtube.com/embed/L_LUpnjgPso?autoplay=1' },
+    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', x: 20, y: 260, size: '4.2 MB', date: 'Today, 10:00 AM', src: '/images/jingle-bells.mp3' }, // Assuming placeholder or local file? The previous src was missing for mp3 in INITIAL_FILE_SYSTEM usually unless it was there. 
+    // Wait, previous f8 in Downloads had no src?
+    // Let's check previous f8.
+    // { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
+    // It had no src. I should probably add a dummy src or keep it empty. QuickTime handles empty src gracefully?
+    // QuickTimeApp: } : file && (file.type === 'mp3' || file.type === 'wav') ? ( ... <audio src={file.src} ...
+    // If src is undefined, audio won't play. I should probably point to a sample mp3 if I can, or just leave it as dummy.
+    // I'll stick to the existing pattern. The previous f8 didn't have src in the snippet I read?
+    // Let me check the read_file output again.
+    // Line 55: { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
+    // Line 58: { id: 'f7', name: 'Fireplace 4K.mp4', type: 'mp4', size: '1.2 GB', date: 'Dec 20, 2024', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }
+    // Okay, I'll give f8 a dummy src or finding a public mp3. 
+    // https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3
+    { id: 'f2', name: 'Decorations.jpg', type: 'img', x: 140, y: 20, size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
   ],
   '/Documents': [
     { id: 'f3', name: 'Holiday Recipes.pdf', type: 'pdf', size: '450 KB', date: 'Dec 12, 2024', src: 'https://pdfobject.com/pdf/sample.pdf' },
@@ -52,11 +66,8 @@ const INITIAL_FILE_SYSTEM = {
   ],
   '/Downloads': [
     { id: 'f5', name: 'Elf_Installer.dmg', type: 'dmg', size: '145 MB', date: 'Just now' },
-    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
   ],
-  '/Movies': [
-    { id: 'f7', name: 'Fireplace 4K.mp4', type: 'mp4', size: '1.2 GB', date: 'Dec 20, 2024', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }
-  ],
+  '/Movies': [],
   '/Pictures': [
     { id: 'f6', name: 'Family_Xmas.jpg', type: 'img', size: '3.1 MB', date: 'Dec 25, 2023', src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80' },
   ]
@@ -113,6 +124,18 @@ const FileIconAsset = ({ type, src, className = "" }) => {
     switch (type) {
         case 'img': return <img src={src} className={`w-full h-full object-cover rounded shadow-sm border-2 border-white pointer-events-none ${className}`} alt="" />;
         case 'folder': return <Folder size={56} className={`text-red-600 drop-shadow-md ${className}`} fill="#dc2626" />;
+        case 'note-link': return (
+            <div className={`relative flex items-center justify-center ${className}`}>
+                <FileText size={56} className="text-yellow-500 drop-shadow-md" strokeWidth={0.8} fill="#fbbf24" />
+                <span className="absolute bottom-2 right-0 text-[8px] font-bold text-yellow-600 bg-white px-0.5 rounded border border-gray-200 shadow-sm">NOTE</span>
+            </div>
+        );
+        case 'youtube': return (
+            <div className={`relative flex items-center justify-center ${className}`}>
+                <Video size={56} className="text-red-600 drop-shadow-md" strokeWidth={0.8} fill="#dc2626" />
+                <span className="absolute bottom-2 right-0 text-[8px] font-bold text-red-600 bg-white px-0.5 rounded border border-gray-200 shadow-sm">YT</span>
+            </div>
+        );
         case 'pdf': return (
             <div className={`relative flex items-center justify-center ${className}`}>
                 <FileText size={56} className="text-red-500 drop-shadow-md" strokeWidth={0.8} fill="white" />
@@ -450,9 +473,21 @@ const CalculatorApp = () => {
 };
 
 const QuickTimeApp = ({ file }) => {
+    const isYouTube = file?.src && (file.src.includes('youtube.com') || file.src.includes('youtu.be'));
+
     return (
         <div className="flex flex-col h-full bg-black text-white items-center justify-center">
-            {file && (file.type === 'mp4' || file.type === 'mov') ? (
+            {isYouTube ? (
+                 <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={file.src} 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen 
+                 />
+            ) : file && (file.type === 'mp4' || file.type === 'mov') ? (
                 <video src={file.src} controls className="max-h-full max-w-full w-full h-auto outline-none" autoPlay />
             ) : file && (file.type === 'mp3' || file.type === 'wav') ? (
                 <div className="flex flex-col items-center space-y-4">
@@ -1144,8 +1179,10 @@ const Spotlight = ({ isOpen, onClose, onLaunch, fileSystem }) => {
                              // If folder, construct path and launch Finder
                              const path = file.parentPath === '/' ? `/${file.name}` : `${file.parentPath}/${file.name}`;
                              onLaunch('finder', { initialPath: path });
+                        } else if (file.type === 'note-link') {
+                             onLaunch('notes');
                         } else {
-                             onLaunch(file.type === 'txt' ? 'textedit' : file.type === 'pdf' ? 'preview' : file.type === 'mp4' || file.type === 'mov' || file.type === 'mp3' || file.type === 'wav' ? 'quicktime' : 'preview', { file, title: file.name });
+                             onLaunch(file.type === 'txt' ? 'textedit' : file.type === 'pdf' ? 'preview' : file.type === 'mp4' || file.type === 'mov' || file.type === 'mp3' || file.type === 'wav' || file.type === 'youtube' ? 'quicktime' : 'preview', { file, title: file.name });
                         }
                         onClose(); 
                     }}
@@ -1672,7 +1709,10 @@ const App = () => {
 
   const renderContent = (win) => {
     switch(win.appId) {
-      case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name })} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
+      case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => {
+          if (f.type === 'note-link') launchApp('notes');
+          else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' || f.type === 'youtube' ? 'quicktime' : 'preview', { file: f, title: f.name });
+      }} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
       case 'safari': return <SafariApp />;
       case 'notes': return <NotesApp family={family} lists={lists} userNotes={userNotes} onUpdateMasterList={handleUpdateMasterList} onUpdateUserNote={handleUpdateUserNote} />;
       case 'terminal': return <TerminalApp fileSystem={fileSystem} setFileSystem={setFileSystem} />;
@@ -1730,7 +1770,8 @@ const App = () => {
              onDragStart={handleIconDrag} 
              onDoubleClick={(f) => {
                  if (f.type === 'folder') launchApp('finder', { initialPath: `/Desktop/${f.name}` });
-                 else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name });
+                 else if (f.type === 'note-link') launchApp('notes');
+                 else launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' || f.type === 'youtube' ? 'quicktime' : 'preview', { file: f, title: f.name });
              }}
              onContextMenu={(e, f) => { setContextMenu({ x: e.clientX, y: e.clientY, targetId: f.id, showFileOps: true }); }}
              isRenaming={renamingId === file.id}

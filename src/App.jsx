@@ -6,7 +6,7 @@ import {
   LogOut, Power, RefreshCw, Moon, File, List, Bold, Italic, 
   ListOrdered, Link, Trash, Type, Eye, EyeOff, Heading1, Plus,
   FileSpreadsheet, Box, FileCode, Film, Video, Music, User, ArrowRight, Lock,
-  Snowflake, Gift, Mail, Quote, ArrowDownWideNarrow, Smartphone
+  Snowflake, Gift, Mail, Quote, ArrowDownWideNarrow, Smartphone, Info
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
@@ -863,25 +863,37 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
               if (isSorted) {
                   items.sort((a, b) => {
                       const getPrice = (s) => {
-                          const m = s.line.match(/\$(\d+)/);
-                          return m ? parseInt(m[1], 10) : 0;
+                          const m = s.line.match(/\$(\d+(?:,\d{3})*)/);
+                          return m ? parseInt(m[1].replace(/,/g, ''), 10) : 0;
                       };
                       return getPrice(b) - getPrice(a);
                   });
               }
-              items.forEach(({ line, index }) => {
+              items.forEach(({ line, index, subs }) => {
                   const isChecked = line.trim().startsWith('- [x] ');
                   const content = line.trim().substring(6);
                   output.push(
-                      <div key={index} className="flex items-start space-x-2 mb-1 ml-1 group">
+                      <div key={index} className="flex items-start space-x-2 mb-1 ml-1 group relative">
                           <input 
                             type="checkbox" 
                             checked={isChecked} 
                             onChange={() => onCheckboxClick(index)}
-                            className="mt-1.5 w-4 h-4 accent-red-500 cursor-pointer" 
+                            className="mt-1.5 w-4 h-4 accent-red-500 cursor-pointer shrink-0" 
                           />
                           <span className={`dark:text-white leading-relaxed ${isChecked ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
                             {parseInline(content, index)}
+                            {subs && subs.length > 0 && (
+                                <span className="relative group/info inline-block ml-2 align-middle">
+                                    <Info size={14} className="text-gray-400 hover:text-blue-500 cursor-help" />
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-64 bg-white dark:bg-[#333] p-3 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-50 hidden group-hover/info:block text-sm text-gray-700 dark:text-gray-200 text-left font-normal normal-case no-underline">
+                                        <div className="space-y-2">
+                                            {subs.map((sub, si) => (
+                                                <div key={si} className="leading-snug">{parseInline(sub, `${index}-sub-${si}`)}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </span>
+                            )}
                           </span>
                       </div>
                   );
@@ -926,10 +938,25 @@ const NotesApp = ({ family, lists, userNotes, onUpdateMasterList, onUpdateUserNo
               return;
           }
 
+          // Handle Empty Lines contextually (Lookahead for sub-bullets)
+          if (line.trim() === '') {
+              const nextLine = lines[i+1];
+              if (checkboxBuffer.length > 0 && nextLine && (nextLine.startsWith('  ') || nextLine.startsWith('\t')) && (nextLine.trim().startsWith('- ') || nextLine.trim().startsWith('* '))) {
+                  return;
+              }
+          }
+
           // Handle Checkboxes specially
           if (line.trim().startsWith('- [ ] ') || line.trim().startsWith('- [x] ')) {
               if (listType !== null) flushList(); 
-              checkboxBuffer.push({ line, index: i });
+              checkboxBuffer.push({ line, index: i, subs: [] });
+              return;
+          }
+          
+          // Handle Sub-bullets attached to previous checkbox
+          // Checks for indentation (2 spaces or tab) and starts with "- " or "* "
+          if (checkboxBuffer.length > 0 && (line.startsWith('  ') || line.startsWith('\t')) && (line.trim().startsWith('- ') || line.trim().startsWith('* '))) {
+              checkboxBuffer[checkboxBuffer.length - 1].subs.push(line.trim().substring(2));
               return;
           }
           

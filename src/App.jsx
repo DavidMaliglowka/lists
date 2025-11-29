@@ -1211,10 +1211,10 @@ const ContextMenu = ({ x, y, onClose, onAction, targetId, showFileOps }) => (
     
     <div className="hover:bg-red-500 hover:text-white px-4 py-1 cursor-pointer" onClick={() => onAction('wallpaper')}>Change Wallpaper</div>
     <div className="hover:bg-red-500 hover:text-white px-4 py-1 cursor-pointer" onClick={() => onAction('cleanup')}>Clean Up</div>
-  </div>
+      </div>
 );
 
-const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpaper, setWallpaper, username, onUpdateUsername }) => {
+const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpaper, setWallpaper, username, onUpdateUsername, onRestore }) => {
     const [newUsername, setNewUsername] = useState(username || '');
     
     useEffect(() => { setNewUsername(username || ''); }, [username]);
@@ -1238,8 +1238,8 @@ const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpap
                     disabled={newUsername === username}
                 >
                     Update
-                </button>
-             </div>
+        </button>
+      </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
@@ -1250,8 +1250,22 @@ const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpap
              <span>Snow Effect</span>
              <div onClick={() => setSnowEffect(!snowEffect)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${snowEffect ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${snowEffect ? 'translate-x-6' : ''}`} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 mb-6">
              {Object.entries(WALLPAPERS).map(([k, v]) => (<img key={k} src={v} onClick={() => setWallpaper(v)} className={`w-full h-24 object-cover rounded border-2 cursor-pointer ${wallpaper === v ? 'border-red-500' : 'border-transparent'}`} alt={k} />))}
+          </div>
+
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-bold text-red-500 uppercase mb-2">Danger Zone</h3>
+            <button 
+                onClick={onRestore}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+            >
+                <RotateCw size={16} />
+                <span>Restore Default Settings & Files</span>
+            </button>
+            <p className="text-[10px] text-gray-500 mt-2 text-center">
+                This will reset your desktop, files, and settings to default. Your family status will be preserved.
+            </p>
           </div>
         </div>
     );
@@ -1780,6 +1794,18 @@ const App = () => {
       setUserNotes(prev => ({ ...prev, [noteId]: content }));
   };
 
+  const handleRestore = async () => {
+      if (confirm("Are you sure you want to reset your account? This will delete all custom files, notes, and settings. This action cannot be undone.")) {
+          setFileSystem(INITIAL_FILE_SYSTEM);
+          setWallpaper(WALLPAPERS['Cozy Fireplace']);
+          setDarkMode(true);
+          setSnowEffect(true);
+          setUserNotes({});
+          // Force immediate save? The useEffect will pick up changes.
+          alert("Account restored to defaults.");
+      }
+  };
+
   const renderContent = (win) => {
     switch(win.appId) {
       case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => {
@@ -1799,6 +1825,7 @@ const App = () => {
             snowEffect={snowEffect} setSnowEffect={setSnowEffect}
             wallpaper={wallpaper} setWallpaper={setWallpaper}
             username={username} onUpdateUsername={handleUsernameChange}
+            onRestore={handleRestore}
         />
       );
       default: return <div className="flex items-center justify-center h-full text-gray-500">App Under Construction</div>;

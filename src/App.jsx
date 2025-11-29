@@ -1346,16 +1346,13 @@ const App = () => {
                   }
               } else {
                   // Existing system file - Merge updates
-                  // We want to update 'src' and 'type' for things like YouTube updates
-                  // But preserve user position (x,y) and name (if renamed)
                   const existing = merged[path][existingIdx];
-                  merged[path][existingIdx] = {
-                      ...existing,
-                      type: sysFile.type, // Ensure type update (mp4 -> youtube)
-                      src: sysFile.src !== undefined ? sysFile.src : existing.src, // Update src if provided
-                      content: sysFile.content !== undefined ? sysFile.content : existing.content,
-                      // Keep existing x, y, name
-                  };
+                  const updated = { ...existing, type: sysFile.type };
+                  
+                  if (sysFile.src !== undefined) updated.src = sysFile.src;
+                  if (sysFile.content !== undefined) updated.content = sysFile.content;
+                  
+                  merged[path][existingIdx] = updated;
               }
           });
       });

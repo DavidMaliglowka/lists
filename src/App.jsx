@@ -10,16 +10,15 @@ import {
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, getDoc, writeBatch, deleteDoc } from "firebase/firestore";
 
 /**
  * --- ASSETS & THEME ---
  */
 const WALLPAPERS = {
-  'Cozy Fireplace': "https://images.unsplash.com/photo-1542296332-2e44a996aa0c?q=80&w=2560&auto=format&fit=crop",
-  'Snowy Forest': "https://images.unsplash.com/photo-1482686119632-ef21b4464219?q=80&w=2560&auto=format&fit=crop",
-  'Christmas Lights': "https://images.unsplash.com/photo-1512389142860-9c449e58a543?q=80&w=2560&auto=format&fit=crop",
-  'Winter Morning': "https://images.unsplash.com/photo-1457269449834-928af6406edb?q=80&w=2560&auto=format&fit=crop",
+  'Cozy Fireplace': `${import.meta.env.BASE_URL}images/wallpaper_illustration_1.png`,
+  'Snowy Village': `${import.meta.env.BASE_URL}images/wallpaper_illustration_2.png`,
+  'Santa Workshop': `${import.meta.env.BASE_URL}images/wallpaper_illustration_4.png`,
 };
 
 const THEME_COLOR = "red"; // Changing global accent to Red for Christmas
@@ -179,6 +178,7 @@ const BootScreen = ({ onFinish }) => {
 const LoginScreen = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -190,20 +190,60 @@ const LoginScreen = ({ onLogin }) => {
 
     try {
       if (isRegistering) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // 1. Validate Username
+        if (!username || username.length < 3) throw new Error('Username must be at least 3 chars');
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        if (!usernameRegex.test(username)) throw new Error('Username can only contain letters, numbers, and underscores');
+        
+        // 2. Check Availability
+        const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()));
+        if (usernameDoc.exists()) throw new Error('Username is already taken');
+
+        // 3. Create Auth User
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCred.user;
+
+        // 4. Create Firestore Data
+        const batch = writeBatch(db);
+        // Reserve username
+        batch.set(doc(db, 'usernames', username.toLowerCase()), {
+            email: email,
+            uid: user.uid
+        });
+        // Create user profile
+        batch.set(doc(db, 'users', user.uid), {
+            fileSystem: INITIAL_FILE_SYSTEM,
+            settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
+            username: username
+        });
+        await batch.commit();
+
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Login Logic
+        let loginEmail = email;
+        if (!email.includes('@')) {
+            // Treat as username
+            const usernameDoc = await getDoc(doc(db, 'usernames', email.toLowerCase()));
+            if (usernameDoc.exists()) {
+                loginEmail = usernameDoc.data().email;
+            } else {
+                throw new Error('Username not found');
+            }
+        }
+        await signInWithEmailAndPassword(auth, loginEmail, password);
       }
       // Auth state listener in App will handle transition
     } catch (err) {
       console.error(err);
       let msg = 'Authentication failed';
+      if (err.message) msg = err.message;
       if (err.code === 'auth/invalid-email') msg = 'Invalid email address';
       if (err.code === 'auth/user-disabled') msg = 'User disabled';
       if (err.code === 'auth/user-not-found') msg = 'User not found';
       if (err.code === 'auth/wrong-password') msg = 'Wrong password';
       if (err.code === 'auth/email-already-in-use') msg = 'Email already in use';
       if (err.code === 'auth/weak-password') msg = 'Password should be at least 6 characters';
+      if (err.code === 'auth/invalid-credential') msg = 'Invalid credentials';
       setError(msg);
     } finally {
       setLoading(false);
@@ -212,22 +252,37 @@ const LoginScreen = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-cover bg-center" style={{ backgroundImage: `url(${WALLPAPERS['Cozy Fireplace']})` }}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-md" />
       <div className="z-10 flex flex-col items-center w-full max-w-xs animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md shadow-2xl mb-6 flex items-center justify-center border border-white/20">
           <Snowflake size={48} className="text-white" />
         </div>
-        <h2 className="text-white text-xl font-medium mb-6 drop-shadow-md">Santa's Helper</h2>
+        <h2 className="text-white text-xl font-medium mb-6 drop-shadow-md">David's List 2025</h2>
 
         <form onSubmit={handleAuth} className="w-full space-y-4">
+          {isRegistering && (
+            <div className="relative group">
+                <input 
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                className="w-full bg-gray-900/60 text-white placeholder-gray-300 px-4 py-2 rounded-full border border-transparent focus:border-red-500/50 outline-none transition-all text-center backdrop-blur-md"
+                required
+                disabled={loading}
+                />
+            </div>
+          )}
           <div className="relative group">
              <input 
-               type="email"
+               type="text"
+               name="email"
+               autoComplete="username"
                value={email}
                onChange={(e) => setEmail(e.target.value)}
-               placeholder="Email Address"
+               placeholder={isRegistering ? "Email Address" : "Email or Username"}
                className="w-full bg-gray-900/60 text-white placeholder-gray-300 px-4 py-2 rounded-full border border-transparent focus:border-red-500/50 outline-none transition-all text-center backdrop-blur-md"
-               autoFocus
+               autoFocus={!isRegistering}
                required
                disabled={loading}
              />
@@ -235,6 +290,8 @@ const LoginScreen = ({ onLogin }) => {
           <div className="relative group">
              <input 
                type="password"
+               name="password"
+               autoComplete={isRegistering ? "new-password" : "current-password"}
                value={password}
                onChange={(e) => setPassword(e.target.value)}
                placeholder="Password"
@@ -249,18 +306,24 @@ const LoginScreen = ({ onLogin }) => {
           
           {error && <div className="mt-3 text-red-300 text-xs text-center shadow-black drop-shadow-md bg-black/40 rounded px-2 py-1">{error}</div>}
           
-          <div className="text-center">
+          <div className="text-center mt-4">
             <button 
               type="button"
               onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-              className="text-xs text-gray-300 hover:text-white underline bg-black/20 px-2 py-1 rounded"
+              className="text-xs text-gray-300 hover:text-white underline bg-black/20 px-3 py-1.5 rounded-full transition-colors"
             >
               {isRegistering ? 'Have an account? Login' : 'Need an account? Register'}
             </button>
           </div>
+          
+          <div className="text-center">
+             <span className="text-xs text-white/50 uppercase tracking-widest font-bold">
+                {isRegistering ? 'Registering' : 'Logging In'}
+             </span>
+          </div>
         </form>
 
-        <div className="mt-16 flex flex-col items-center text-white/60 text-xs">
+        <div className="mt-8 flex flex-col items-center text-white/60 text-xs">
            <div className="flex items-center space-x-2 mb-2">
              <Lock size={12} />
              <span>North Pole Secure Login</span>
@@ -809,17 +872,17 @@ const TerminalApp = ({ fileSystem, setFileSystem }) => {
            const fileName = args[1];
            if(fileName) setFileSystem(prev => ({ ...prev, [cwd]: [...(prev[cwd]||[]), { id: Date.now(), name: fileName, type: 'txt', content: '', date: 'Today' }] }));
            break;
-        case 'whoami': output = "santa_helper"; break;
-        default: output = cmd ? `elf_sh: command not found: ${cmd}` : "";
+        case 'whoami': output = "david"; break;
+        default: output = cmd ? `zsh: command not found: ${cmd}` : "";
       }
-      setHistory([...history, `santa_helper@macbook:${cwd === '/Desktop' ? '~/Desktop' : cwd}$ ${input}`, output].filter(Boolean));
+      setHistory([...history, `david@macbook:${cwd === '/Desktop' ? '~/Desktop' : cwd}$ ${input}`, output].filter(Boolean));
       setInput("");
     }
   };
   return (
     <div className="bg-[#1e1e1e]/95 backdrop-blur-md text-white font-mono p-2 h-full w-full text-xs sm:text-sm overflow-auto" onClick={() => document.getElementById('term-input')?.focus()}>
       {history.map((line, i) => <div key={i} className={`mb-0.5 break-words ${line.startsWith('santa') ? 'font-bold text-green-400' : 'text-gray-300'}`}>{line}</div>)}
-      <div className="flex"><span className="mr-2 text-green-400 font-bold">santa_helper@macbook:{cwd === '/Desktop' ? '~/Desktop' : cwd}$</span><input id="term-input" type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} className="bg-transparent border-none outline-none flex-1 text-white" autoFocus /></div><div ref={endRef} />
+      <div className="flex"><span className="mr-2 text-green-400 font-bold">david@macbook:{cwd === '/Desktop' ? '~/Desktop' : cwd}$</span><input id="term-input" type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} className="bg-transparent border-none outline-none flex-1 text-white" autoFocus /></div><div ref={endRef} />
     </div>
   );
 };
@@ -847,7 +910,7 @@ const Window = ({ window, onClose, onMinimize, onMaximize, onFocus, isActive, up
 
   return (
     <div 
-        className={`absolute rounded-lg flex flex-col overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 transition-all duration-75 ${window.isMaximized ? '!top-8 !left-0 !w-full !h-[calc(100%-2rem)] !rounded-none !transform-none' : ''} ${isActive ? 'shadow-2xl ring-1 ring-red-500/30' : 'shadow-lg opacity-95 grayscale-[0.2]'}`} 
+        className={`absolute rounded-lg flex flex-col overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 ${window.isMaximized ? '!top-8 !left-0 !w-full !h-[calc(100%-2rem)] !rounded-none !transform-none' : ''} ${isActive ? 'shadow-2xl ring-1 ring-red-500/30' : 'shadow-lg opacity-95 grayscale-[0.2]'}`} 
         style={{ width: window.size.w, height: window.size.h, transform: `translate(${window.position.x}px, ${window.position.y}px)`, zIndex: window.zIndex }} 
         onMouseDown={() => onFocus(window.id)}
         data-window-id={window.id} // Identifier for context menu checks
@@ -1005,6 +1068,49 @@ const ContextMenu = ({ x, y, onClose, onAction, targetId, showFileOps }) => (
   </div>
 );
 
+const SettingsApp = ({ darkMode, setDarkMode, snowEffect, setSnowEffect, wallpaper, setWallpaper, username, onUpdateUsername }) => {
+    const [newUsername, setNewUsername] = useState(username || '');
+    
+    useEffect(() => { setNewUsername(username || ''); }, [username]);
+
+    return (
+        <div className="p-6 bg-gray-100 dark:bg-[#1e1e1e] h-full text-gray-800 dark:text-white overflow-y-auto">
+          <h2 className="text-2xl font-bold mb-4">Settings</h2>
+          
+          <div className="p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
+             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Account</h3>
+             <div className="flex items-center space-x-2">
+                <input 
+                    value={newUsername} 
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="flex-1 bg-gray-100 dark:bg-black/20 border border-transparent focus:border-red-500 rounded px-3 py-1.5 text-sm outline-none dark:text-white"
+                    placeholder="Username"
+                />
+                <button 
+                    onClick={() => onUpdateUsername(newUsername)}
+                    className="bg-red-500 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-red-600 disabled:opacity-50"
+                    disabled={newUsername === username}
+                >
+                    Update
+                </button>
+             </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
+             <span>Dark Mode</span>
+             <div onClick={() => setDarkMode(!darkMode)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${darkMode ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${darkMode ? 'translate-x-6' : ''}`} /></div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
+             <span>Snow Effect</span>
+             <div onClick={() => setSnowEffect(!snowEffect)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${snowEffect ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${snowEffect ? 'translate-x-6' : ''}`} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+             {Object.entries(WALLPAPERS).map(([k, v]) => (<img key={k} src={v} onClick={() => setWallpaper(v)} className={`w-full h-24 object-cover rounded border-2 cursor-pointer ${wallpaper === v ? 'border-red-500' : 'border-transparent'}`} alt={k} />))}
+          </div>
+        </div>
+    );
+};
+
 /**
  * --- MAIN OS ---
  */
@@ -1015,7 +1121,9 @@ const App = () => {
   const [user, setUser] = useState(null);
   
   const [darkMode, setDarkMode] = useState(true);
+  const [snowEffect, setSnowEffect] = useState(true);
   const [wallpaper, setWallpaper] = useState(WALLPAPERS['Cozy Fireplace']);
+  const [username, setUsername] = useState('');
   const [date, setDate] = useState(new Date());
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
@@ -1044,15 +1152,17 @@ const App = () => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             if (data.fileSystem) setFileSystem(data.fileSystem);
+            if (data.username) setUsername(data.username);
             if (data.settings) {
               if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
               if (data.settings.darkMode !== undefined) setDarkMode(data.settings.darkMode);
+              if (data.settings.snowEffect !== undefined) setSnowEffect(data.settings.snowEffect);
             }
           } else {
             // Initialize new user
             setDoc(userDocRef, {
               fileSystem: INITIAL_FILE_SYSTEM,
-              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true }
+              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true }
             });
           }
           setIsLoadingData(false);
@@ -1082,7 +1192,8 @@ const App = () => {
       // Only update what changed - simplified here to update structure
       setDoc(userDocRef, {
         fileSystem,
-        settings: { wallpaper, darkMode }
+        settings: { wallpaper, darkMode, snowEffect },
+        username
       }, { merge: true })
       .then(() => setIsSaving(false))
       .catch((err) => {
@@ -1090,13 +1201,13 @@ const App = () => {
           setIsSaving(false);
       });
     }, 1000); // Reduced debounce to 1 second
-  }, [user, fileSystem, wallpaper, darkMode]);
+  }, [user, fileSystem, wallpaper, darkMode, snowEffect, username]);
 
   useEffect(() => {
     if (isLoggedIn && !booting && !isLoadingData) {
         saveState();
     }
-  }, [fileSystem, wallpaper, darkMode, isLoggedIn, booting, isLoadingData, saveState]);
+  }, [fileSystem, wallpaper, darkMode, snowEffect, username, isLoggedIn, booting, isLoadingData, saveState]);
 
   useEffect(() => {
     const t = setInterval(() => setDate(new Date()), 1000);
@@ -1323,6 +1434,41 @@ const App = () => {
   const updateSize = (id, w, h) => setWindows(prev => prev.map(win => win.id === id ? { ...win, size: { w, h } } : win));
   const toggleMin = (id) => { setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: true } : w)); setActiveWindowId(null); };
 
+  const handleUsernameChange = async (newUsername) => {
+      if (!user || !newUsername) return;
+      const lower = newUsername.trim().toLowerCase();
+      const currentLower = (username || '').toLowerCase();
+      
+      if (lower === currentLower) return;
+      if (lower.length < 3) { alert('Username too short'); return; }
+      const regex = /^[a-zA-Z0-9_]+$/;
+      if (!regex.test(lower)) { alert('Invalid characters'); return; }
+
+      try {
+          // Check availability
+          const newUsernameDoc = await getDoc(doc(db, 'usernames', lower));
+          if (newUsernameDoc.exists()) { alert('Username taken'); return; }
+
+          const batch = writeBatch(db);
+          // Reserve new
+          batch.set(doc(db, 'usernames', lower), { email: user.email, uid: user.uid });
+          // Remove old (if exists)
+          if (currentLower) {
+              batch.delete(doc(db, 'usernames', currentLower));
+          }
+          // Update user profile
+          const userRef = doc(db, 'users', user.uid);
+          batch.set(userRef, { username: newUsername }, { merge: true });
+          
+          await batch.commit();
+          setUsername(newUsername);
+          alert('Username updated!');
+      } catch (e) {
+          console.error(e);
+          alert('Error updating username: ' + e.message);
+      }
+  };
+
   const renderContent = (win) => {
     switch(win.appId) {
       case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name })} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
@@ -1334,16 +1480,12 @@ const App = () => {
       case 'calculator': return <CalculatorApp />; 
       case 'quicktime': return <QuickTimeApp file={win.file} />;
       case 'settings': return (
-        <div className="p-6 bg-gray-100 dark:bg-[#1e1e1e] h-full text-gray-800 dark:text-white">
-          <h2 className="text-2xl font-bold mb-4">Settings</h2>
-          <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
-             <span>Dark Mode</span>
-             <div onClick={() => setDarkMode(!darkMode)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${darkMode ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${darkMode ? 'translate-x-6' : ''}`} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-             {Object.entries(WALLPAPERS).map(([k, v]) => (<img key={k} src={v} onClick={() => setWallpaper(v)} className={`w-full h-24 object-cover rounded border-2 cursor-pointer ${wallpaper === v ? 'border-red-500' : 'border-transparent'}`} alt={k} />))}
-          </div>
-        </div>
+        <SettingsApp 
+            darkMode={darkMode} setDarkMode={setDarkMode}
+            snowEffect={snowEffect} setSnowEffect={setSnowEffect}
+            wallpaper={wallpaper} setWallpaper={setWallpaper}
+            username={username} onUpdateUsername={handleUsernameChange}
+        />
       );
       default: return <div className="flex items-center justify-center h-full text-gray-500">App Under Construction</div>;
     }
@@ -1375,7 +1517,7 @@ const App = () => {
         }} 
         onClick={() => { setContextMenu(null); setSpotlightOpen(false); }}
     >
-      <Snowfall />
+      {snowEffect && <Snowfall />}
       <MenuBar activeApp={windows.find(w => w.id === activeWindowId)} date={date} toggleSpotlight={(e) => { e.stopPropagation(); setSpotlightOpen(p => !p); }} darkMode={darkMode} onAction={triggerSystemAction} isSaving={isSaving} />
       
       <div className="absolute inset-0 z-0">

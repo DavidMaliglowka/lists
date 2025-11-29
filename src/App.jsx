@@ -1744,9 +1744,10 @@ const App = () => {
     if (appId === 'quicktime') size = { w: 500, h: 350 };
     if (props.size) size = props.size;
 
+    const cascadeOffset = isMobile ? 0 : (windows.length * 30) % 150;
     const position = props.position || { 
-        x: isMobile ? 20 : Math.max(0, (window.innerWidth - size.w) / 2), 
-        y: isMobile ? 50 : Math.max(0, (window.innerHeight - size.h) / 2) 
+        x: isMobile ? 20 : Math.max(0, (window.innerWidth - size.w) / 2) + cascadeOffset, 
+        y: isMobile ? 50 : Math.max(0, (window.innerHeight - size.h) / 2) + cascadeOffset
     };
 
     const config = {

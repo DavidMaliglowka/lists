@@ -1404,21 +1404,28 @@ const App = () => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             
+            const loadedFs = data.fileSystem ? mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM) : INITIAL_FILE_SYSTEM;
+            const loadedSettings = {
+                wallpaper: data.settings?.wallpaper || WALLPAPERS['Cozy Fireplace'],
+                darkMode: data.settings?.darkMode !== undefined ? data.settings.darkMode : true,
+                snowEffect: data.settings?.snowEffect !== undefined ? data.settings.snowEffect : true
+            };
+            const loadedUsername = data.username || '';
+            const loadedFamily = data.family || 'Unknown';
+            const loadedNotes = data.notes || {};
+
+            // Update reference to prevent immediate save loop
+            lastSavedState.current = {
+                fileSystem: loadedFs,
+                settings: loadedSettings,
+                username: loadedUsername,
+                family: loadedFamily,
+                notes: loadedNotes
+            };
+
             // Ignore local writes for fileSystem to prevent loop/overwrite
             if (!docSnap.metadata.hasPendingWrites) {
-                if (data.fileSystem) {
-                    // Merge with latest system defaults
-                    const merged = mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM);
-                    setFileSystem(prev => {
-                        if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
-                        return merged;
-                    });
-                } else {
-                    setFileSystem(prev => {
-                        if (JSON.stringify(prev) === JSON.stringify(INITIAL_FILE_SYSTEM)) return prev;
-                        return INITIAL_FILE_SYSTEM;
-                    });
-                }
+                setFileSystem(prev => JSON.stringify(prev) === JSON.stringify(loadedFs) ? prev : loadedFs);
             }
 
             if (data.username) setUsername(data.username);
@@ -1427,11 +1434,10 @@ const App = () => {
             
             if (data.notes) setUserNotes(data.notes); // Load user notes
 
-            if (data.settings) {
-              if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
-              if (data.settings.darkMode !== undefined) setDarkMode(data.settings.darkMode);
-              if (data.settings.snowEffect !== undefined) setSnowEffect(data.settings.snowEffect);
-            }
+            setWallpaper(loadedSettings.wallpaper);
+            setDarkMode(loadedSettings.darkMode);
+            setSnowEffect(loadedSettings.snowEffect);
+
           } else {
             // Initialize new user
             setDoc(userDocRef, {
@@ -1460,27 +1466,38 @@ const App = () => {
 
   // Sync state to Firestore (Debounced)
   const saveTimeoutRef = useRef(null);
+  const lastSavedState = useRef(null);
+
   const saveState = useCallback(() => {
     if (!user) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     
-    setIsSaving(true);
-    saveTimeoutRef.current = setTimeout(() => {
-      const userDocRef = doc(db, "users", user.uid);
-      // Only update what changed - simplified here to update structure
-      setDoc(userDocRef, {
+    const currentState = {
         fileSystem,
         settings: { wallpaper, darkMode, snowEffect },
         username,
         family,
         notes: userNotes
-      }, { merge: true })
-      .then(() => setIsSaving(false))
+    };
+
+    // Deep compare with last known server state
+    if (lastSavedState.current && JSON.stringify(currentState) === JSON.stringify(lastSavedState.current)) {
+        return;
+    }
+
+    setIsSaving(true);
+    saveTimeoutRef.current = setTimeout(() => {
+      const userDocRef = doc(db, "users", user.uid);
+      setDoc(userDocRef, currentState, { merge: true })
+      .then(() => {
+          setIsSaving(false);
+          lastSavedState.current = currentState; // Update ref on successful save
+      })
       .catch((err) => {
           console.error("Error saving state:", err);
           setIsSaving(false);
       });
-    }, 1000); // Reduced debounce to 1 second
+    }, 1000); 
   }, [user, fileSystem, wallpaper, darkMode, snowEffect, username, family, userNotes]);
 
   useEffect(() => {

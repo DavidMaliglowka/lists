@@ -45,20 +45,7 @@ const INITIAL_FILE_SYSTEM = {
   '/Desktop': [
     { id: 'link1', name: "David's List", type: 'note-link', x: 20, y: 20, date: 'Today' },
     { id: 'f7', name: 'Fireplace 4K', type: 'youtube', x: 20, y: 140, size: '0 B', date: 'Dec 20, 2024', src: 'https://www.youtube.com/embed/L_LUpnjgPso?autoplay=1' },
-    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', x: 20, y: 260, size: '4.2 MB', date: 'Today, 10:00 AM', src: '/images/jingle-bells.mp3' }, // Assuming placeholder or local file? The previous src was missing for mp3 in INITIAL_FILE_SYSTEM usually unless it was there. 
-    // Wait, previous f8 in Downloads had no src?
-    // Let's check previous f8.
-    // { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
-    // It had no src. I should probably add a dummy src or keep it empty. QuickTime handles empty src gracefully?
-    // QuickTimeApp: } : file && (file.type === 'mp3' || file.type === 'wav') ? ( ... <audio src={file.src} ...
-    // If src is undefined, audio won't play. I should probably point to a sample mp3 if I can, or just leave it as dummy.
-    // I'll stick to the existing pattern. The previous f8 didn't have src in the snippet I read?
-    // Let me check the read_file output again.
-    // Line 55: { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', size: '4.2 MB', date: 'Today, 10:00 AM' },
-    // Line 58: { id: 'f7', name: 'Fireplace 4K.mp4', type: 'mp4', size: '1.2 GB', date: 'Dec 20, 2024', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }
-    // Okay, I'll give f8 a dummy src or finding a public mp3. 
-    // https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3
-    { id: 'f2', name: 'Decorations.jpg', type: 'img', x: 140, y: 20, size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
+    { id: 'f8', name: 'Jingle Bells.mp3', type: 'mp3', x: 20, y: 260, size: '4.2 MB', date: 'Today, 10:00 AM', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }, 
   ],
   '/Documents': [
     { id: 'f3', name: 'Holiday Recipes.pdf', type: 'pdf', size: '450 KB', date: 'Dec 12, 2024', src: 'https://pdfobject.com/pdf/sample.pdf' },
@@ -70,6 +57,7 @@ const INITIAL_FILE_SYSTEM = {
   '/Movies': [],
   '/Pictures': [
     { id: 'f6', name: 'Family_Xmas.jpg', type: 'img', size: '3.1 MB', date: 'Dec 25, 2023', src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80' },
+    { id: 'f2', name: 'Decorations.jpg', type: 'img', size: '2.4 MB', date: 'Yesterday, 4:20 PM', src: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=800&q=80' },
   ]
 };
 
@@ -1405,9 +1393,15 @@ const App = () => {
             if (data.fileSystem) {
                 // Merge with latest system defaults
                 const merged = mergeSystemFiles(data.fileSystem, INITIAL_FILE_SYSTEM);
-                setFileSystem(merged);
+                setFileSystem(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
+                    return merged;
+                });
             } else {
-                setFileSystem(INITIAL_FILE_SYSTEM);
+                setFileSystem(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(INITIAL_FILE_SYSTEM)) return prev;
+                    return INITIAL_FILE_SYSTEM;
+                });
             }
 
             if (data.username) setUsername(data.username);
@@ -1712,15 +1706,24 @@ const App = () => {
     }
     const id = Date.now();
     const isMobile = window.innerWidth < 640;
+    
+    let size = { w: isMobile ? 320 : 800, h: isMobile ? 500 : 600 };
+    if (appId === 'calculator') size = { w: 280, h: 460 }; 
+    if (appId === 'notes') size = { w: 800, h: 600 };
+    if (appId === 'quicktime') size = { w: 500, h: 350 };
+    if (props.size) size = props.size;
+
+    const position = props.position || { 
+        x: isMobile ? 20 : Math.max(0, (window.innerWidth - size.w) / 2), 
+        y: isMobile ? 50 : Math.max(0, (window.innerHeight - size.h) / 2) 
+    };
+
     const config = {
       id, appId, title: props.title || appId.charAt(0).toUpperCase() + appId.slice(1),
-      position: { x: isMobile ? 20 : 100 + (windows.length * 20), y: isMobile ? 50 : 50 + (windows.length * 20) },
-      size: { w: isMobile ? 320 : 800, h: isMobile ? 500 : 600 },
+      position,
+      size,
       zIndex: zIndex + 1, isMultiInstance: appId === 'preview' || appId === 'textedit' || appId === 'finder' || appId === 'quicktime', ...props
     };
-    if (appId === 'calculator') config.size = { w: 280, h: 460 }; 
-    if (appId === 'notes') config.size = { w: 800, h: 600 };
-    if (appId === 'quicktime') config.size = { w: 500, h: 350 };
     setWindows([...windows, config]); setActiveWindowId(id); setZIndex(z => z + 1);
   };
 

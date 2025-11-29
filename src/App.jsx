@@ -16,10 +16,9 @@ import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
  * --- ASSETS & THEME ---
  */
 const WALLPAPERS = {
-  'Cozy Fireplace': "https://images.unsplash.com/photo-1542296332-2e44a996aa0c?q=80&w=2560&auto=format&fit=crop",
-  'Snowy Forest': "https://images.unsplash.com/photo-1482686119632-ef21b4464219?q=80&w=2560&auto=format&fit=crop",
-  'Christmas Lights': "https://images.unsplash.com/photo-1512389142860-9c449e58a543?q=80&w=2560&auto=format&fit=crop",
-  'Winter Morning': "https://images.unsplash.com/photo-1457269449834-928af6406edb?q=80&w=2560&auto=format&fit=crop",
+  'Cozy Fireplace': "/images/wallpaper_illustration_1.png",
+  'Snowy Village': "/images/wallpaper_illustration_2.png",
+  'Santa Workshop': "/images/wallpaper_illustration_4.png",
 };
 
 const THEME_COLOR = "red"; // Changing global accent to Red for Christmas
@@ -204,6 +203,7 @@ const LoginScreen = ({ onLogin }) => {
       if (err.code === 'auth/wrong-password') msg = 'Wrong password';
       if (err.code === 'auth/email-already-in-use') msg = 'Email already in use';
       if (err.code === 'auth/weak-password') msg = 'Password should be at least 6 characters';
+      if (err.code === 'auth/invalid-credential') msg = 'Invalid credentials';
       setError(msg);
     } finally {
       setLoading(false);
@@ -212,7 +212,7 @@ const LoginScreen = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-cover bg-center" style={{ backgroundImage: `url(${WALLPAPERS['Cozy Fireplace']})` }}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-md" />
       <div className="z-10 flex flex-col items-center w-full max-w-xs animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md shadow-2xl mb-6 flex items-center justify-center border border-white/20">
           <Snowflake size={48} className="text-white" />
@@ -223,6 +223,8 @@ const LoginScreen = ({ onLogin }) => {
           <div className="relative group">
              <input 
                type="email"
+               name="email"
+               autoComplete="username"
                value={email}
                onChange={(e) => setEmail(e.target.value)}
                placeholder="Email Address"
@@ -235,6 +237,8 @@ const LoginScreen = ({ onLogin }) => {
           <div className="relative group">
              <input 
                type="password"
+               name="password"
+               autoComplete={isRegistering ? "new-password" : "current-password"}
                value={password}
                onChange={(e) => setPassword(e.target.value)}
                placeholder="Password"
@@ -249,18 +253,24 @@ const LoginScreen = ({ onLogin }) => {
           
           {error && <div className="mt-3 text-red-300 text-xs text-center shadow-black drop-shadow-md bg-black/40 rounded px-2 py-1">{error}</div>}
           
-          <div className="text-center">
+          <div className="text-center mt-4">
             <button 
               type="button"
               onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-              className="text-xs text-gray-300 hover:text-white underline bg-black/20 px-2 py-1 rounded"
+              className="text-xs text-gray-300 hover:text-white underline bg-black/20 px-3 py-1.5 rounded-full transition-colors"
             >
               {isRegistering ? 'Have an account? Login' : 'Need an account? Register'}
             </button>
           </div>
+          
+          <div className="text-center">
+             <span className="text-xs text-white/50 uppercase tracking-widest font-bold">
+                {isRegistering ? 'Registering' : 'Logging In'}
+             </span>
+          </div>
         </form>
 
-        <div className="mt-16 flex flex-col items-center text-white/60 text-xs">
+        <div className="mt-8 flex flex-col items-center text-white/60 text-xs">
            <div className="flex items-center space-x-2 mb-2">
              <Lock size={12} />
              <span>North Pole Secure Login</span>
@@ -1015,6 +1025,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   
   const [darkMode, setDarkMode] = useState(true);
+  const [snowEffect, setSnowEffect] = useState(true);
   const [wallpaper, setWallpaper] = useState(WALLPAPERS['Cozy Fireplace']);
   const [date, setDate] = useState(new Date());
   const [windows, setWindows] = useState([]);
@@ -1047,12 +1058,13 @@ const App = () => {
             if (data.settings) {
               if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
               if (data.settings.darkMode !== undefined) setDarkMode(data.settings.darkMode);
+              if (data.settings.snowEffect !== undefined) setSnowEffect(data.settings.snowEffect);
             }
           } else {
             // Initialize new user
             setDoc(userDocRef, {
               fileSystem: INITIAL_FILE_SYSTEM,
-              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true }
+              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true }
             });
           }
           setIsLoadingData(false);
@@ -1082,7 +1094,7 @@ const App = () => {
       // Only update what changed - simplified here to update structure
       setDoc(userDocRef, {
         fileSystem,
-        settings: { wallpaper, darkMode }
+        settings: { wallpaper, darkMode, snowEffect }
       }, { merge: true })
       .then(() => setIsSaving(false))
       .catch((err) => {
@@ -1090,13 +1102,13 @@ const App = () => {
           setIsSaving(false);
       });
     }, 1000); // Reduced debounce to 1 second
-  }, [user, fileSystem, wallpaper, darkMode]);
+  }, [user, fileSystem, wallpaper, darkMode, snowEffect]);
 
   useEffect(() => {
     if (isLoggedIn && !booting && !isLoadingData) {
         saveState();
     }
-  }, [fileSystem, wallpaper, darkMode, isLoggedIn, booting, isLoadingData, saveState]);
+  }, [fileSystem, wallpaper, darkMode, snowEffect, isLoggedIn, booting, isLoadingData, saveState]);
 
   useEffect(() => {
     const t = setInterval(() => setDate(new Date()), 1000);
@@ -1340,6 +1352,10 @@ const App = () => {
              <span>Dark Mode</span>
              <div onClick={() => setDarkMode(!darkMode)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${darkMode ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${darkMode ? 'translate-x-6' : ''}`} /></div>
           </div>
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm mb-4">
+             <span>Snow Effect</span>
+             <div onClick={() => setSnowEffect(!snowEffect)} className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${snowEffect ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${snowEffect ? 'translate-x-6' : ''}`} /></div>
+          </div>
           <div className="grid grid-cols-2 gap-2">
              {Object.entries(WALLPAPERS).map(([k, v]) => (<img key={k} src={v} onClick={() => setWallpaper(v)} className={`w-full h-24 object-cover rounded border-2 cursor-pointer ${wallpaper === v ? 'border-red-500' : 'border-transparent'}`} alt={k} />))}
           </div>
@@ -1375,7 +1391,7 @@ const App = () => {
         }} 
         onClick={() => { setContextMenu(null); setSpotlightOpen(false); }}
     >
-      <Snowfall />
+      {snowEffect && <Snowfall />}
       <MenuBar activeApp={windows.find(w => w.id === activeWindowId)} date={date} toggleSpotlight={(e) => { e.stopPropagation(); setSpotlightOpen(p => !p); }} darkMode={darkMode} onAction={triggerSystemAction} isSaving={isSaving} />
       
       <div className="absolute inset-0 z-0">

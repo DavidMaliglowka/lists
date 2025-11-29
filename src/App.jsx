@@ -16,9 +16,9 @@ import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
  * --- ASSETS & THEME ---
  */
 const WALLPAPERS = {
-  'Cozy Fireplace': "/images/wallpaper_illustration_1.png",
-  'Snowy Village': "/images/wallpaper_illustration_2.png",
-  'Santa Workshop': "/images/wallpaper_illustration_4.png",
+  'Cozy Fireplace': `${import.meta.env.BASE_URL}images/wallpaper_illustration_1.png`,
+  'Snowy Village': `${import.meta.env.BASE_URL}images/wallpaper_illustration_2.png`,
+  'Santa Workshop': `${import.meta.env.BASE_URL}images/wallpaper_illustration_4.png`,
 };
 
 const THEME_COLOR = "red"; // Changing global accent to Red for Christmas
@@ -217,7 +217,7 @@ const LoginScreen = ({ onLogin }) => {
         <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md shadow-2xl mb-6 flex items-center justify-center border border-white/20">
           <Snowflake size={48} className="text-white" />
         </div>
-        <h2 className="text-white text-xl font-medium mb-6 drop-shadow-md">Santa's Helper</h2>
+        <h2 className="text-white text-xl font-medium mb-6 drop-shadow-md">David's List 2025</h2>
 
         <form onSubmit={handleAuth} className="w-full space-y-4">
           <div className="relative group">
@@ -819,17 +819,17 @@ const TerminalApp = ({ fileSystem, setFileSystem }) => {
            const fileName = args[1];
            if(fileName) setFileSystem(prev => ({ ...prev, [cwd]: [...(prev[cwd]||[]), { id: Date.now(), name: fileName, type: 'txt', content: '', date: 'Today' }] }));
            break;
-        case 'whoami': output = "santa_helper"; break;
-        default: output = cmd ? `elf_sh: command not found: ${cmd}` : "";
+        case 'whoami': output = "david"; break;
+        default: output = cmd ? `zsh: command not found: ${cmd}` : "";
       }
-      setHistory([...history, `santa_helper@macbook:${cwd === '/Desktop' ? '~/Desktop' : cwd}$ ${input}`, output].filter(Boolean));
+      setHistory([...history, `david@macbook:${cwd === '/Desktop' ? '~/Desktop' : cwd}$ ${input}`, output].filter(Boolean));
       setInput("");
     }
   };
   return (
     <div className="bg-[#1e1e1e]/95 backdrop-blur-md text-white font-mono p-2 h-full w-full text-xs sm:text-sm overflow-auto" onClick={() => document.getElementById('term-input')?.focus()}>
       {history.map((line, i) => <div key={i} className={`mb-0.5 break-words ${line.startsWith('santa') ? 'font-bold text-green-400' : 'text-gray-300'}`}>{line}</div>)}
-      <div className="flex"><span className="mr-2 text-green-400 font-bold">santa_helper@macbook:{cwd === '/Desktop' ? '~/Desktop' : cwd}$</span><input id="term-input" type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} className="bg-transparent border-none outline-none flex-1 text-white" autoFocus /></div><div ref={endRef} />
+      <div className="flex"><span className="mr-2 text-green-400 font-bold">david@macbook:{cwd === '/Desktop' ? '~/Desktop' : cwd}$</span><input id="term-input" type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} className="bg-transparent border-none outline-none flex-1 text-white" autoFocus /></div><div ref={endRef} />
     </div>
   );
 };
@@ -857,7 +857,7 @@ const Window = ({ window, onClose, onMinimize, onMaximize, onFocus, isActive, up
 
   return (
     <div 
-        className={`absolute rounded-lg flex flex-col overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 transition-all duration-75 ${window.isMaximized ? '!top-8 !left-0 !w-full !h-[calc(100%-2rem)] !rounded-none !transform-none' : ''} ${isActive ? 'shadow-2xl ring-1 ring-red-500/30' : 'shadow-lg opacity-95 grayscale-[0.2]'}`} 
+        className={`absolute rounded-lg flex flex-col overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 ${window.isMaximized ? '!top-8 !left-0 !w-full !h-[calc(100%-2rem)] !rounded-none !transform-none' : ''} ${isActive ? 'shadow-2xl ring-1 ring-red-500/30' : 'shadow-lg opacity-95 grayscale-[0.2]'}`} 
         style={{ width: window.size.w, height: window.size.h, transform: `translate(${window.position.x}px, ${window.position.y}px)`, zIndex: window.zIndex }} 
         onMouseDown={() => onFocus(window.id)}
         data-window-id={window.id} // Identifier for context menu checks

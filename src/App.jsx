@@ -1450,6 +1450,7 @@ const App = () => {
   // Initialize/Fetch System Files
   useEffect(() => {
       const initSystem = async () => {
+          if (!isLoggedIn) return; // Only if logged in
           try {
               const sysRef = doc(db, 'files', 'defaults');
               const sysSnap = await getDoc(sysRef);
@@ -1463,7 +1464,7 @@ const App = () => {
           }
       };
       initSystem();
-  }, []);
+  }, [isLoggedIn]);
 
   // Helper to merge system files into user files
   const mergeSystemFiles = useCallback((userFs, systemFs) => {

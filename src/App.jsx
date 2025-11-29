@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, setDoc, onSnapshot, getDoc, writeBatch, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, getDoc, writeBatch, deleteDoc, collection, getDocs } from "firebase/firestore";
 
 /**
  * --- ASSETS & THEME ---
@@ -698,7 +698,7 @@ const SafariApp = () => {
   );
 };
 
-const NotesApp = ({ family }) => {
+const NotesApp = ({ family, lists }) => {
   const [notes, setNotes] = useState([
     { id: 1, title: 'My Christmas List', content: '# 🎄 My Christmas List 2024\n\n### Big Wishes\n- [ ] New MacBook Pro M4\n- [ ] Noise Cancelling Headphones\n- [ ] Espresso Machine\n\n### Stocking Stuffers\n- [ ] Fuzzy Socks\n- [ ] Dark Chocolate\n- [ ] Gift Cards', date: '10:42 AM' }, 
     { id: 2, title: 'Cookie Recipe', content: '# Sugar Cookies\n1. 3 cups Flour\n2. 1 cup Butter\n3. 1 cup Sugar\n\n![Cookies](https://images.unsplash.com/photo-1499636138143-bd630f5cf388?w=200&q=80)', date: 'Yesterday' }
@@ -730,20 +730,17 @@ const NotesApp = ({ family }) => {
   };
 
   useEffect(() => {
-    let masterContent = UNKNOWN_LIST;
-    if (family === 'Dorfman') masterContent = DORFMAN_LIST;
-    else if (family === 'Maliglowka') masterContent = MALIGLOWKA_LIST;
-    else if (family === 'Admin') masterContent = DORFMAN_LIST + '\n\n' + MALIGLOWKA_LIST;
+    let masterContent = lists.Unknown || UNKNOWN_LIST;
+    if (family === 'Dorfman') masterContent = lists.Dorfman || DORFMAN_LIST;
+    else if (family === 'Maliglowka') masterContent = lists.Maliglowka || MALIGLOWKA_LIST;
+    else if (family === 'Admin') masterContent = (lists.Dorfman || DORFMAN_LIST) + '\n\n' + (lists.Maliglowka || MALIGLOWKA_LIST);
 
     setNotes(prev => {
         const existing = prev.find(n => n.id === 1);
         const newContent = existing ? mergeListState(masterContent, existing.content) : masterContent;
-        // Only overwrite if content is different or not initialized
-        // Wait, we WANT to overwrite the structure with master, preserving checks.
-        // This runs on mount/family change.
         return prev.map(n => n.id === 1 ? { ...n, content: newContent, title: 'My Christmas List 2025' } : n);
     });
-  }, [family]);
+  }, [family, lists]);
 
   const activeNote = notes.find(n => n.id === activeNoteId) || { title: 'No Notes', content: '' };
 
@@ -1274,6 +1271,7 @@ const App = () => {
   const [wallpaper, setWallpaper] = useState(WALLPAPERS['Cozy Fireplace']);
   const [username, setUsername] = useState('');
   const [family, setFamily] = useState('Unknown');
+  const [lists, setLists] = useState({ Dorfman: '', Maliglowka: '', Unknown: '' });
   const [date, setDate] = useState(new Date());
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
@@ -1285,7 +1283,45 @@ const App = () => {
   const [draggedFileId, setDraggedFileId] = useState(null);
   const [phantomFile, setPhantomFile] = useState(null); // For Finder -> Desktop Drag
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch Lists & Seed if empty
+  useEffect(() => {
+      const fetchLists = async () => {
+          if (!isLoggedIn) return;
+          
+          try {
+              const dorfmanRef = doc(db, 'lists', 'Dorfman');
+              const maliglowkaRef = doc(db, 'lists', 'Maliglowka');
+              const unknownRef = doc(db, 'lists', 'Unknown');
+              
+              const dorfmanSnap = await getDoc(dorfmanRef);
+              
+              if (!dorfmanSnap.exists()) {
+                  // Seed data
+                  const batch = writeBatch(db);
+                  batch.set(dorfmanRef, { content: DORFMAN_LIST });
+                  batch.set(maliglowkaRef, { content: MALIGLOWKA_LIST });
+                  batch.set(unknownRef, { content: UNKNOWN_LIST });
+                  await batch.commit();
+                  setLists({ Dorfman: DORFMAN_LIST, Maliglowka: MALIGLOWKA_LIST, Unknown: UNKNOWN_LIST });
+              } else {
+                  // Fetch all
+                  const maliglowkaSnap = await getDoc(maliglowkaRef);
+                  const unknownSnap = await getDoc(unknownRef);
+                  setLists({
+                      Dorfman: dorfmanSnap.data()?.content || '',
+                      Maliglowka: maliglowkaSnap.data()?.content || '',
+                      Unknown: unknownSnap.data()?.content || ''
+                  });
+              }
+          } catch (e) {
+              console.error("Error fetching lists:", e);
+          }
+      };
+      fetchLists();
+  }, [isLoggedIn]);
 
   // Auth Listener
   useEffect(() => {
@@ -1294,6 +1330,7 @@ const App = () => {
         setUser(currentUser);
         setIsLoggedIn(true);
         setIsLoadingData(true);
+        setLoadError(false);
         // Load user data or create if not exists
         const userDocRef = doc(db, "users", currentUser.uid);
         
@@ -1304,6 +1341,8 @@ const App = () => {
             if (data.fileSystem) setFileSystem(data.fileSystem);
             if (data.username) setUsername(data.username);
             if (data.family) setFamily(data.family);
+            else setFamily('Unknown'); // Explicitly default if missing
+
             if (data.settings) {
               if (data.settings.wallpaper) setWallpaper(data.settings.wallpaper);
               if (data.settings.darkMode !== undefined) setDarkMode(data.settings.darkMode);
@@ -1313,12 +1352,14 @@ const App = () => {
             // Initialize new user
             setDoc(userDocRef, {
               fileSystem: INITIAL_FILE_SYSTEM,
-              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true }
+              settings: { wallpaper: WALLPAPERS['Cozy Fireplace'], darkMode: true, snowEffect: true },
+              family: 'Unknown'
             });
           }
           setIsLoadingData(false);
         }, (error) => {
            console.error("Error fetching user data:", error);
+           setLoadError(true);
            setIsLoadingData(false);
         });
         return () => unsubDoc();
@@ -1326,6 +1367,7 @@ const App = () => {
         setUser(null);
         setIsLoggedIn(false);
         setIsLoadingData(false);
+        setLoadError(false);
       }
     });
     return () => unsubscribe();
@@ -1356,10 +1398,10 @@ const App = () => {
   }, [user, fileSystem, wallpaper, darkMode, snowEffect, username, family]);
 
   useEffect(() => {
-    if (isLoggedIn && !booting && !isLoadingData) {
+    if (isLoggedIn && !booting && !isLoadingData && !loadError) {
         saveState();
     }
-  }, [fileSystem, wallpaper, darkMode, snowEffect, username, family, isLoggedIn, booting, isLoadingData, saveState]);
+  }, [fileSystem, wallpaper, darkMode, snowEffect, username, family, isLoggedIn, booting, isLoadingData, loadError, saveState]);
 
   useEffect(() => {
     const t = setInterval(() => setDate(new Date()), 1000);
@@ -1625,7 +1667,7 @@ const App = () => {
     switch(win.appId) {
       case 'finder': return <FinderApp fileSystem={fileSystem} initialPath={win.initialPath} openFile={(f) => launchApp(f.type === 'txt' ? 'textedit' : f.type === 'pdf' ? 'preview' : f.type === 'mp4' || f.type === 'mov' || f.type === 'mp3' || f.type === 'wav' ? 'quicktime' : 'preview', { file: f, title: f.name })} onContextMenu={setContextMenu} renamingId={renamingId} onRename={renameFile} onFinderDragStart={handleFinderDragStart} />;
       case 'safari': return <SafariApp />;
-      case 'notes': return <NotesApp family={family} />;
+      case 'notes': return <NotesApp family={family} lists={lists} />;
       case 'terminal': return <TerminalApp fileSystem={fileSystem} setFileSystem={setFileSystem} />;
       case 'preview': return <PreviewApp file={win.file} />;
       case 'textedit': return <TextEditApp file={win.file} onSave={updateFileContent} />;

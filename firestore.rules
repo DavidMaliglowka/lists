@@ -1,17 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Usernames mapping: username -> { email, uid }
+    match /usernames/{username} {
+      // Public read needed for login (resolving username -> email)
+      allow read: if true;
+      
+      // Authenticated users can claim a username (create) or release it (delete)
+      // Must link to their own UID
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
     match /users/{userId} {
-      // Allow read/write only if the user matches the document ID
-      // AND enforce basic data validation to prevent abuse
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null 
                    && request.auth.uid == userId
-                   // Prevent huge documents (max 1MB - standard limit is 1MB anyway, but good to be explicit or lower if needed)
-                   // Actually, let's strictly limit to reasonable usage for this app (e.g. 200KB) to prevent abuse
                    && request.resource.data.size() < 200 * 1024
-                   // Ensure users don't overwrite critical fields or add garbage top-level fields
-                   && request.resource.data.keys().hasOnly(['fileSystem', 'settings']);
+                   // Added 'username' to allowed fields
+                   && request.resource.data.keys().hasOnly(['fileSystem', 'settings', 'username']);
     }
   }
 }
